@@ -12,34 +12,34 @@ PutOnTimeTable(
   duration_hr = NA,
   sample_interval_minute = 30,
   aggregration_type = "latest",
-  grid = NULL,
+  Template = NULL,
   start_times = NULL,
   end_times = NULL,
   IDs_times = NULL
 )
 }
 \arguments{
-\item{values}{vector of values for grid}
+\item{values}{a vector of values to be added to the time table.}
 
-\item{IDs}{vector of associated IDs for each value and datatimes}
+\item{IDs}{a vector of IDs associated with each value in values.}
 
-\item{datetimes}{vector of date times associate with each values / IDs}
+\item{datetimes}{a vector of date-time objects associated with each value in values.}
 
-\item{var_name}{scalar name of variable}
+\item{var_name}{a scalar string of the name of the variable to be added.}
 
-\item{duration_hr}{how many hours a variable's valuable can be carried forward if proceeding measurements are missing.}
+\item{duration_hr}{a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.}
 
-\item{sample_interval_minute}{scalar time between one time grid point and another (in minutes)}
+\item{sample_interval_minute}{a scalar integer denoting the number of minutes between each time grid point in the time table.}
 
 \item{aggregration_type}{how to handle multiple measurements for same time point; 'latest' or 'mean'}
 
-\item{grid}{grid precomputed from GetTimeTable()}
+\item{Template}{the time grid 'Template' precomputed from GetTimeTableTemplate()}
 
-\item{start_times}{optional argument used if 'grid' is NULL vector of date times denoting the 'end' of a time series.}
+\item{start_times}{optional argument used if 'Template' is NULL vector of date times denoting the 'end' of a time series.}
 
-\item{end_times}{optional argument used if 'grid' is NULL, vector of date times denoting the 'start' of a time series.}
+\item{end_times}{optional argument used if 'Template' is NULL, vector of date times denoting the 'start' of a time series.}
 
-\item{IDs_times}{optional argument used if 'grid' is NULL, vector of IDs associated with each start and end time.}
+\item{IDs_times}{optional argument used if 'Template' is NULL, vector of IDs associated with each start and end time.}
 }
 \value{
 a data.table with values on a discrete time grids

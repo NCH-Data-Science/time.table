@@ -1,18 +1,17 @@
 
-#' creates a uniformly-spaced discrete-time grid data.table
+#' creates a uniformly-spaced discrete-time grid data.table on which all other variables append to.
 #' @param start_times vector of date times denoting the 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
 #' @param end_times vector of date times denoting the 'end' of a time series  (e.g. the end of a patient's stay in the ICU) 
 #' @param IDs vector of ID associated with each discrete time series. If null, each start/end time pair is given a unique ID.
-#' @param sample_interval_minute: numeric scalar, the time elapsed between one grid point to another (in minutes).
-#' 
+#' @param sample_interval_minute: a scalar integer denoting the number of minutes between each time grid point in the time table.
 #' @return long tables of variables, time points at every `sample_interval_minute` from  start_times to end_times
 #' @export
-GetTimeTable <- function(start_times = NULL,
-                         end_times = NULL,
-                         IDs = NULL, 
-                         sample_interval_minute = 30) { 
+GetTimeTableTemplate <- function(start_times = NULL,
+                                 end_times = NULL,
+                                 IDs = NULL, 
+                                 sample_interval_minute = 30) { 
   
- 
+  
   
   
   ######
@@ -82,7 +81,7 @@ GetTimeTable <- function(start_times = NULL,
 #' 
 #' @param x vector of date times for 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
 #' @param sample_interval_minute scalar time between one time grid point and another (in minutes)
-#' @param duration_hr how many hours until a variable's valuable expires
+#' @param duration_hr a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.
 #' @return a vector where Last Observed Carry Forward
 #' 
 #' @noRd
@@ -90,7 +89,7 @@ get_LOCF_values <- function(x,
                             sample_interval_minute = 5,
                             duration_hr = 24) {
   
-
+  
   
   # find the na indices for LOCF (Last observation carried forward)
   # and carry forward unexpired observed values
@@ -106,7 +105,7 @@ get_LOCF_values <- function(x,
     # indices and find which indices we can carry over before duration has expired
     
     max_carry_over_indices = base::floor(as.numeric((duration_hr*60)/
-                                                sample_interval_minute))
+                                                      sample_interval_minute))
     
     # find indices eligible for carry forward (if na)
     LOCF_idx = sapply(non_na_index,
@@ -134,21 +133,20 @@ get_LOCF_values <- function(x,
 
 #' Put Variable on time table
 #' 
-#' @param values vector of values for grid
-#' @param IDs vector of associated IDs for each value and datatimes
-#' @param datetimes vector of date times associate with each values / IDs
-#' @param var_name scalar name of variable
-#' @param duration_hr how many hours a variable's valuable can be carried forward if proceeding measurements are missing.
-#' @param sample_interval_minute scalar time between one time grid point and another (in minutes)
+#' @param values  a vector of values to be added to the time table.
+#' @param IDs  a vector of IDs associated with each value in values.
+#' @param datetimes a vector of date-time objects associated with each value in values.
+#' @param var_name a scalar string of the name of the variable to be added.
+#' @param duration_hr a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.
+#' @param sample_interval_minute  a scalar integer denoting the number of minutes between each time grid point in the time table.
 #' @param aggregration_type how to handle multiple measurements for same time point; 'latest' or 'mean'
-#' @param grid grid precomputed from GetTimeTable() 
-#' @param start_times optional argument used if 'grid' is NULL vector of date times denoting the 'end' of a time series.
-#' @param end_times optional argument used if 'grid' is NULL, vector of date times denoting the 'start' of a time series.
-#' @param IDs_times optional argument used if 'grid' is NULL, vector of IDs associated with each start and end time.
+#' @param Template the time grid 'Template' precomputed from GetTimeTableTemplate() 
+#' @param start_times optional argument used if 'Template' is NULL vector of date times denoting the 'end' of a time series.
+#' @param end_times optional argument used if 'Template' is NULL, vector of date times denoting the 'start' of a time series.
+#' @param IDs_times optional argument used if 'Template' is NULL, vector of IDs associated with each start and end time.
 #' @return a data.table with values on a discrete time grids
 #' 
 #' @export
-#' 
 PutOnTimeTable=function(
     values,
     IDs,
@@ -157,26 +155,28 @@ PutOnTimeTable=function(
     duration_hr = NA,
     sample_interval_minute = 30,
     aggregration_type = "latest",
-    grid = NULL,
+    Template = NULL,
     start_times = NULL,
     end_times = NULL,
     IDs_times = NULL){
-
+  
   
   
   ##################
   ## error checking
   ##################
+  
   # check if sample interval valid
   check_sample_int_min(sample_interval_minute)
+  
   # check if all grid variables are same length
   check_if_same_length(datetimes,values,IDs)
   
-  if(is.null(grid)){
-    grid <- InitializeTimeTable(start_times = start_times,
-                        end_times = end_times,
-                        sample_interval_minute = sample_interval_minute,
-                        IDs = IDs_times)
+  if(is.null(Template)){
+    Template <- GetTimeTableTemplate(start_times = start_times,
+                                     end_times = end_times,
+                                     sample_interval_minute = sample_interval_minute,
+                                     IDs = IDs_times)
   }
   IDs <- as.character(IDs)
   
@@ -205,17 +205,17 @@ PutOnTimeTable=function(
   # split by variable name
   list_df <- df |> data.table:::split.data.table(by='var_name')
   
-  # join to grid to create NAs at missing times point
+  # join to Template to create NAs at missing times point
   measures_on_grid = lapply(list_df,
                             function(x,grid_use){
                               table.express::right_join(x,grid_use,by=c('grid_datetimes','IDs'))},
-                            grid_use=grid)
+                            grid_use=Template)
   
   # if a measurement is taken later than the start of the grid,
   # there are NAs for 'var_name', let's fix that
   meas_name = names(measures_on_grid)
   n_meas = length(meas_name)
-  n_row_grid = nrow(grid)
+  n_row_grid = nrow(Template)
   i = 1
   
   for(i in 1:n_meas){
@@ -233,11 +233,24 @@ PutOnTimeTable=function(
   return(measures_on_grid |> data.table::rbindlist())
 }
 
-CbindTimeTables=function(timetable1,timetable2){
- if(!nrow(timetable1)==nrow(timetable2)){
-   stop("Time tables do not have equal number of rows")
- } 
-  cbind()
+#' combine time tables
+#' 
+#' @param single_timetable a new timetable returned from 'PutOnTimeTable'
+#' @param group_timetable a group of previously combined time tables or a new time table returned from 'PutOnTimeTable'
+#' @param join_type "right join" or "cbind". "cbind" is more efficient but assumes everything is ordered properly.
+#' @export
+CombineTimeTables=function(single_timetable,group_timetable,join_type=c("cbind")){
+  
+  if(join_type=="cbind"){
+    if(!nrow(single_timetable)==nrow(group_timetable)){
+      stop("Time tables do not have equal number of rows")
+    } 
+    return(data.table::cbind(single_timetable,group_timetable))
+  } else if(join_type=="right_join"){
+    return(table.express::right_join(single_timetable,group_timetable))
+  } else {
+    stop("invalid join_type")
+  }
   
 }
 
@@ -248,7 +261,7 @@ CbindTimeTables=function(timetable1,timetable2){
 #' 
 #' @noRd
 check_sample_int_min = function(x){
-
+  
   if(!length(x)==1){
     stop("ERROR: no or multiple sample_interval_min passed")
     
@@ -269,8 +282,8 @@ check_sample_int_min = function(x){
 #' 
 #' @noRd
 check_start_end_times = function(starts,
-                                ends){
-
+                                 ends){
+  
   if(!length(starts) == length(ends)){
     stop('the number of start_times does not equal number of end_times') 
   }

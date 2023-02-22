@@ -1,0 +1,174 @@
+---
+title: "Basics of TimeTableR"
+author: "Brendan Matthew Galdo"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Basics of TimeTableR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Example Data
+
+```{r }
+library(TimeTableR)
+library(data.table)
+library(table.express)
+# library(devtools)
+# load_all()
+df_admit_discharge = data.frame(patient_id=paste0("pat_",1:2),
+                                admit=c(as.POSIXct("2012-03-12 12:12:12"),
+                                        as.POSIXct("2012-03-13 11:11:11")),
+                                discharge=c(as.POSIXct("2012-3-20 12:12:12"),
+                                            as.POSIXct("2012-03-20 10:10:10")))
+
+head(df_admit_discharge)
+```
+
+# Create Time Table Template 
+
+this specifics the start & end of each IDs times and is used to create a skeleton in which.
+```{r}
+
+TimeTableTempl = TimeTableR::GetTimeTableTemplate(start_times = df_admit_discharge$admit,
+                                                  end_times = df_admit_discharge$discharge,
+                                                  IDs = df_admit_discharge$patient_id,
+                                                  sample_interval_minute=60 # grid point at every 60th minute 
+)
+
+head(TimeTableTempl)
+```
+
+
+
+# Add a Variable feature to the Time Table
+
+First, we'll generate some fake data for our two patients. In this example, a patient's heart rate is measured every few hours.
+
+```{r}
+
+# patient 1
+times_pat_1 = seq(as.POSIXct("2012-03-12 12:12:12"),
+                  as.POSIXct("2012-03-20 20:20:20"),
+                  by="5 hours") # patient 1 has their heart rate measured every 5 hours
+values_pat_1 = rnorm(length(times_pat_1),80,20)
+ID_pat_1 = rep("pat_1",length(times_pat_1))
+
+# patient 2
+times_pat_2 = seq(as.POSIXct("2012-03-13 11:11:11"),
+                  as.POSIXct("2012-03-20 10:10:10"),
+                  by="4 hours") # patient 2 has their heart rate measured every 4 hours
+values_pat_2 = rnorm(length(times_pat_2),70,10)
+ID_pat_2 = rep("pat_2",length(times_pat_2))
+
+
+# let's store consolidate these into a data.frame
+df_heartrate = data.frame(IDs = c(ID_pat_1,ID_pat_2),
+                          heart_rate = c(values_pat_1,values_pat_2),
+                          times = c(times_pat_1,times_pat_2))
+
+head(df_heartrate)
+
+```
+
+```{r}
+
+heart_rate_tt = TimeTableR::PutOnTimeTable(values = df_heartrate$heart_rate,
+                                           datetimes = df_heartrate$times,
+                                           IDs = df_heartrate$IDs,
+                                           var_name = "heart_rate",
+                                           Template = TimeTableTempl, # pass template from section one
+                                           sample_interval_minute = 60,
+                                           aggregration_type = "mean", #how to handle multiple measurements for same time point
+                                           duration_hr = 2 # assume measures are carried forward 2 hours if no new measurement
+)
+
+head(heart_rate_tt)
+```
+
+# Add Static feature to the Time Table 
+
+```{r}
+
+# patient 1
+times_pat_1 = as.POSIXct("2012-03-12 12:12:12")
+values_pat_1 = "male"
+ID_pat_1 = rep("pat_1",length(values_pat_1))
+
+# patient 2
+times_pat_2 = as.POSIXct("2012-03-13 11:11:11")
+values_pat_2 = "female"
+ID_pat_2 = rep("pat_2",length(values_pat_2))
+
+
+# let's store consolidate these into a data.frame
+df_sex = data.frame(IDs=c(ID_pat_1,ID_pat_2),
+                    value=c(values_pat_1,values_pat_2),
+                    datetimes=c(times_pat_1,times_pat_2))
+
+head(df_sex)
+
+sex_tt = PutOnTimeTable(values = df_sex$value,
+                        datetimes = df_sex$datetimes,
+                        IDs = df_sex$IDs,
+                        var_name = "sex",
+                        Template = TimeTableTempl, # pass template from section one 
+                        sample_interval_minute = 60, 
+                        aggregration_type = "latest", # how to handle multiple measurements for same time point 
+                        duration_hr = NA # a measure doesn't expire here since it's static 
+                        # both 'NA' or 'Inf' would work here.
+)
+
+head(sex_tt)
+```
+
+# Combine TimeTables into a data.table  
+
+## Cbind
+```{r}
+# 
+tt = CombineTimeTables(giver_tt = sex_tt,
+                       reciever_tt = heart_rate_tt,
+                       join_type='cbind')
+
+head(tt)
+```
+
+## Right Join
+```{r}
+
+CombineTimeTables(giver_tt = sex_tt,
+                  reciever_tt = heart_rate_tt, 
+                  join_type='right_join') 
+
+```
+
+## Benchmarking Join Types
+```{r}
+library(microbenchmark)
+
+mbm <- microbenchmark("right_join" = { 
+  CombineTimeTables(giver_tt = sex_tt,
+                    reciever_tt = heart_rate_tt, 
+                    join_type='right_join') },
+  "cbind" = {
+    CombineTimeTables(giver_tt = sex_tt,
+                      reciever_tt = heart_rate_tt,
+                      join_type='cbind')
+  },
+  "cbind_fast" = {
+    CombineTimeTables(giver_tt = sex_tt,
+                      reciever_tt = heart_rate_tt,
+                      join_type='cbind_fast')
+  })
+
+mbm
+```

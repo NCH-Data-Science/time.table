@@ -1,3 +1,30 @@
+.datatable.aware <- TRUE
+
+#' creates a sequence of times uniformally spaced for an ID
+#' @param  x data.frame from created mid GetTimeTableTemplate
+#' @param  si see sample_interval_minute in `GetTimeTableTemplate`
+#' @noRd
+ExpandTimes=function(x,si){
+  
+  si =  paste0(si," min")
+  
+  times = seq(lubridate::ceiling_date(x[,"start_times"],unit = si),
+              lubridate::ceiling_date(x[,"end_times"],unit = si),,
+              by = si )
+  
+  df = data.frame(IDs = rep(x[,"IDs"],
+                            length(times)),
+                  grid_times = times)
+  return(df)
+}
+
+#' internal last observed carried forward, used for non-numeric data type 
+#' @param x
+#' @noRd
+char_locf <- function(x) {
+  y <- !is.na(x)
+  c(NA, x[y])[cumsum(y)+1]
+}
 
 #' creates a uniformly-spaced discrete-time grid data.table on which all other variables append to.
 #' @param start_times vector of date times denoting the 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
@@ -17,67 +44,41 @@ GetTimeTableTemplate <- function(start_times = NULL,
   ######
   # error checking
   #######
-  check_sample_int_minute(sample_interval_minute)
-  check_start_end_times(start_times,end_times)
+  CheckSampleIntMin(sample_interval_minute)
+  CheckStartEndTimes(start_times,
+                     end_times)
   if(is.null(IDs)){
     IDs = as.character(1:length(start_times))
   } else {
     IDs <- as.character(IDs)
-    check_if_same_length(times = start_times,
-                         ids = IDs,
-                         val = end_times)
+    CheckIfSameLength(times = start_times,
+                      ids = IDs,
+                      val = end_times)
   }
   
-  #########
-  ## determine global grid times
-  #########
-  
-  ## extract the min date 
-  min_date = lubridate::as_datetime(
-    # TODO: change to ceilling 
-    lubridate::floor_date(min(start_times),
-                          unit = paste0(sample_interval_minute," min")
-    ))
-  
-  ## extract the max date + add one
-  max_date = lubridate::as_datetime(
-    lubridate::ceiling_date(max(end_times),
-                            unit = paste0(sample_interval_minute," min")
-    )) + lubridate::days(1)
-  
-  # compute date range in minutes
-  date_range_minutes = difftime(max_date,
-                                min_date,
-                                units = "mins") |> as.numeric()
-  
-  # compute total number of grid points
-  num_grid_points = date_range_minutes / sample_interval_minute
-  
-  # create a vector of all time points from min to max time range. 
-  # it seems addition on datetime operates on Seconds (unit of measurement)
-  grid_datetimes = min_date + lubridate::minutes(1:num_grid_points) * sample_interval_minute
-  
-  # now make grid times a data.table object
-  grid_datetimes_dt = data.table(grid_datetimes)
-  
+  # construct a data.frame of ID start and end
   time_df = data.frame('IDs' = IDs,
                        'start_times' = start_times,
-                       'end_times' = end_times)
+                       'end_times' = end_times) 
   
-  # make a custom grid for each encounter
-  grid_datetimes_dt = grid_datetimes_dt[time_df, 
-                                        .(IDs, x.grid_datetimes), 
-                                        on = .(grid_datetimes >= start_times,
-                                               grid_datetimes <= end_times),
-                                        allow.cartesian=T]
+  grid_df =
+    ExpandTimes(time_df[1,],
+                si = sample_interval_minute)
   
-  colnames(grid_datetimes_dt) = c("IDs", "grid_datetimes")
+  for(i in 2:nrow(time_df)){
+    grid_df = rbind(grid_df,
+                    ExpandTimes(time_df[i,],
+                                si = sample_interval_minute))
+  }
   
-  return(grid_datetimes_dt)
+  grid_dt <- grid_df |> data.table::as.data.table()
+  colnames(grid_dt) = c("IDs", "grid_datetimes")
+  
+  return(grid_dt)
   
 }
 
-#' get_LOCF_values; internal function
+#' GetLOCFvalue; internal function
 #' 
 #' @param x vector of date times for 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
 #' @param sample_interval_minute scalar time between one time grid point and another (in minutes)
@@ -85,16 +86,14 @@ GetTimeTableTemplate <- function(start_times = NULL,
 #' @return a vector where Last Observed Carry Forward
 #' 
 #' @noRd
-get_LOCF_values <- function(x,
-                            sample_interval_minute = 5,
-                            duration_hr = 24) {
-  
-  
+GetLOCFvalue <- function(x,
+                         sample_interval_minute = 5,
+                         duration_hr = 24) {
   
   # find the na indices for LOCF (Last observation carried forward)
-  # and carry forward unexpired observed values
+  # and carry forward unexpired observed value
   
-  # Find the index of non-NA values in the value column
+  # Find the index of non-NA value in the value column
   non_na_index = which(!is.na(x$value))
   
   # if all are na, do nothing
@@ -104,8 +103,14 @@ get_LOCF_values <- function(x,
     # sample_interval_minute apart. we can think of 'duration' in terms of
     # indices and find which indices we can carry over before duration has expired
     
-    max_carry_over_indices = base::floor(as.numeric((duration_hr*60)/
-                                                      sample_interval_minute))
+    if(is.finite(duration_hr)){
+      
+      max_carry_over_indices = base::floor(as.numeric((duration_hr*60)/
+                                                        sample_interval_minute))
+    } else {
+      
+      max_carry_over_indices = length(x$value)
+    }
     
     # find indices eligible for carry forward (if na)
     LOCF_idx = sapply(non_na_index,
@@ -117,14 +122,17 @@ get_LOCF_values <- function(x,
       unique()
     
     n_len = length(x$value)
-    
+    # find conjunction of actual indices and eligible indices (!indices > n_len)
     cond = ((1:n_len) %in% LOCF_idx)
     
-    x$value[cond] = data.table::nafill(x$value[cond],
-                                       type='locf')
-    
+    if(is.numeric(x$value[1])){
+      x$value[cond] = data.table::nafill(x$value[cond],
+                                         type='locf')
+    } else{
+      x$value[cond] = char_locf(x$value[cond])
+    }
   } else {
-    warning('one or more variable has all NA values for an ID')
+    warning('warning: a variable has only NA values for an ID')
   }
   
   return(x)
@@ -134,8 +142,8 @@ get_LOCF_values <- function(x,
 #' Put Variable on time table
 #' 
 #' @param values  a vector of values to be added to the time table.
-#' @param IDs  a vector of IDs associated with each value in values.
-#' @param datetimes a vector of date-time objects associated with each value in values.
+#' @param IDs  a vector of IDs associated with each value in value.
+#' @param datetimes a vector of date-time objects associated with each value in value.
 #' @param var_name a scalar string of the name of the variable to be added.
 #' @param duration_hr a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.
 #' @param sample_interval_minute  a scalar integer denoting the number of minutes between each time grid point in the time table.
@@ -144,33 +152,37 @@ get_LOCF_values <- function(x,
 #' @param start_times optional argument used if 'Template' is NULL vector of date times denoting the 'end' of a time series.
 #' @param end_times optional argument used if 'Template' is NULL, vector of date times denoting the 'start' of a time series.
 #' @param IDs_times optional argument used if 'Template' is NULL, vector of IDs associated with each start and end time.
-#' @return a data.table with values on a discrete time grids
+#' @return a data.table with value on a discrete time grids
 #' 
 #' @export
 PutOnTimeTable=function(
     values,
     IDs,
     datetimes = NULL,
-    var_name=NULL,
-    duration_hr = NA,
-    sample_interval_minute = 30,
+    var_name = NULL,
+    duration_hr = Inf,
+    sample_interval_minute = NULL,
     aggregration_type = "latest",
     Template = NULL,
     start_times = NULL,
     end_times = NULL,
     IDs_times = NULL){
   
-  
+  # TODO: you can eliminate this line of code if tests dont fail
+  # .datatable.aware = TRUE
   
   ##################
   ## error checking
   ##################
+  if(!is.finite(duration_hr)){
+    duration_hr = Inf
+  } 
   
   # check if sample interval valid
-  check_sample_int_min(sample_interval_minute)
+  CheckSampleIntMin(sample_interval_minute)
   
   # check if all grid variables are same length
-  check_if_same_length(datetimes,values,IDs)
+  CheckIfSameLength(datetimes,values,IDs)
   
   if(is.null(Template)){
     Template <- GetTimeTableTemplate(start_times = start_times,
@@ -178,26 +190,30 @@ PutOnTimeTable=function(
                                      sample_interval_minute = sample_interval_minute,
                                      IDs = IDs_times)
   }
+  
   IDs <- as.character(IDs)
   
-  df = data.table('var_name' = rep(var_names,
+  df = data.table('var_name' = rep(var_name,
                                    length(IDs)),
                   'IDs' = IDs,
-                  'value' = value,
+                  'value' = values,
                   'datetimes' = datetimes)
   
-  df$grid_datetimes = 
-    lubridate::ceiling_date(df$datetimes, units = paste0(sample_interval_minute," min"))
+  df = df |> table.express::mutate(grid_datetimes =
+                                     lubridate::ceiling_date(datetimes, unit = paste0(sample_interval_minute," min"))
+  ) |> 
+    as.data.table()
   
   # if there are multiple measures per grid time point, we need to consolidate
-  if(aggregate_mode == 'mean'){
+  if(aggregration_type == 'mean'){
     df <- df |>  table.express::group_by(grid_datetimes,IDs,var_name) |>
       table.express::summarise(value = mean(value,na.rm=TRUE)) |> as.data.table()
   } else if (aggregration_type == 'latest') {
-    df <- df |> table.express::filter(is.na()) |> table.express::group_by(grid_datetimes,IDs,var_name) |> 
+    df <- df |> table.express::filter(!is.na(value)) |> 
+      table.express::group_by(grid_datetimes,IDs,var_name) |> 
       table.express::mutate(max_datetimes = max(datetimes,na.rm = TRUE)) 
     df <- df |>  table.express::filter(datetimes == max_datetimes) |> 
-      table.express::select(var_name,IDs,value,grid_datetimes) |> as.data.table()
+      table.express::select(var_name,IDs,value,grid_datetimes) |> as.data.table()  
   }
   
   setorder(df,IDs,var_name,grid_datetimes)
@@ -208,11 +224,12 @@ PutOnTimeTable=function(
   # join to Template to create NAs at missing times point
   measures_on_grid = lapply(list_df,
                             function(x,grid_use){
-                              table.express::right_join(x,grid_use,by=c('grid_datetimes','IDs'))},
+                              table.express::right_join(x,grid_use,
+                                                        by=c('grid_datetimes','IDs')) },
                             grid_use=Template)
   
-  # if a measurement is taken later than the start of the grid,
-  # there are NAs for 'var_name', let's fix that
+  # # if a measurement is taken later than the start of the grid,
+  # # there are NAs for 'var_name', let's fix that
   meas_name = names(measures_on_grid)
   n_meas = length(meas_name)
   n_row_grid = nrow(Template)
@@ -221,46 +238,92 @@ PutOnTimeTable=function(
   for(i in 1:n_meas){
     measures_on_grid[[i]]$var_name <- rep(meas_name[i],  n_row_grid)
     
-    temp <- split(measures_on_grid[[i]], 
+    temp <- split(measures_on_grid[[i]],
                   by='IDs')
     
     measures_on_grid[[i]] = lapply(temp,
-                                   get_LOCF_values,
+                                   GetLOCFvalue,
                                    sample_interval_minute = sample_interval_minute,
-                                   duration_hr=duration[i]) |> data.table::rbindlist()
+                                   duration_hr=duration_hr) |> data.table::rbindlist()
   }
-  
-  return(measures_on_grid |> data.table::rbindlist())
+  out =  measures_on_grid |> data.table::rbindlist()
+  return(out)
 }
 
 #' combine time tables
 #' 
-#' @param single_timetable a new timetable returned from 'PutOnTimeTable'
-#' @param group_timetable a group of previously combined time tables or a new time table returned from 'PutOnTimeTable'
-#' @param join_type "right join" or "cbind". "cbind" is more efficient but assumes everything is ordered properly.
+#' @param giver_tt a new timetable returned from 'PutOnTimeTable'
+#' @param reciever_tt a group of previously combined time tables or a new time table returned from 'PutOnTimeTable'
+#' @param join_type "right join", "cbind", "cbind_fast". "cbind_fast" is slightly more efficient but assumes everything is ordered properly, while "cbind" orders
+#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with TimeTables of unequal rows.
 #' @export
-CombineTimeTables=function(single_timetable,group_timetable,join_type=c("cbind")){
+CombineTimeTables=function(giver_tt,reciever_tt,join_type=c("right_join")){
   
   if(join_type=="cbind"){
-    if(!nrow(single_timetable)==nrow(group_timetable)){
-      stop("Time tables do not have equal number of rows")
-    } 
-    return(data.table::cbind(single_timetable,group_timetable))
-  } else if(join_type=="right_join"){
-    return(table.express::right_join(single_timetable,group_timetable))
+    if(!nrow(giver_tt ) == nrow(reciever_tt)){
+      stop("Time tables do not have equal number of rows for a 'cbind' join")
+    }  
+    
+    data.table::setorder(giver_tt,IDs,grid_datetimes)
+    data.table::setorder(reciever_tt,IDs,grid_datetimes)
+    
+    giver_tt  = PrepForJoin(giver_tt ,keep_template = FALSE)
+    reciever_tt = PrepForJoin(reciever_tt,keep_template = TRUE)
+    
+    return(cbind(giver_tt ,reciever_tt))
+    
+  } else if(join_type=="cbind_fast"){
+    
+    if(!nrow(giver_tt ) == nrow(reciever_tt)){
+      stop("Time tables do not have equal number of rows for a 'cbind' join")
+    }  
+    
+    giver_tt  = PrepForJoin(giver_tt ,keep_template = FALSE)
+    reciever_tt = PrepForJoin(reciever_tt,keep_template = TRUE)
+    
+    return(cbind(giver_tt ,reciever_tt))
+    
+  }  else if(join_type == 'right_join'){
+    
+    giver_tt  = PrepForJoin(giver_tt ,keep_template = TRUE)
+    reciever_tt = PrepForJoin(reciever_tt,keep_template = TRUE)
+    
+    return(table.express::right_join(giver_tt ,reciever_tt,by=c("IDs","grid_datetimes")))
+    
   } else {
     stop("invalid join_type")
   }
   
 }
 
-#' check_sample_int_min; internal function
+#' Prep a timetable to be joined
+#' @param timetable a timetable
+#' @param keep_template preserve 'IDs' and 'grid_datetimes' columns
+#' @noRd
+PrepForJoin=function(timetable, keep_template=TRUE){
+  if(all(names(timetable) %in% c('var_name','IDs', 'value', 'grid_datetimes'))){
+    
+    var_name = timetable[1,'var_name'] |> as.character()
+    
+    if(keep_template){
+      timetable=timetable[,list(value,IDs,grid_datetimes)]
+    } else {
+      timetable=timetable[,list(value)]
+    }
+    
+    names(timetable)[names(timetable) == "value"] <- var_name
+  } 
+  
+  return(timetable)
+}
+
+#' CheckSampleIntMin; internal function
 #' 
 #' @param starts vector of start times
 #' @param ends vector of end times
 #' 
 #' @noRd
-check_sample_int_min = function(x){
+CheckSampleIntMin = function(x){
   
   if(!length(x)==1){
     stop("ERROR: no or multiple sample_interval_min passed")
@@ -275,23 +338,23 @@ check_sample_int_min = function(x){
   return(x)
 }
 
-#' check_start_end_times; internal function
+#' CheckStartEndTimes; internal function
 #' 
 #' @param starts vector of start times
 #' @param ends vector of end times
 #' 
 #' @noRd
-check_start_end_times = function(starts,
-                                 ends){
+CheckStartEndTimes = function(starts,
+                              ends){
   
   if(!length(starts) == length(ends)){
     stop('the number of start_times does not equal number of end_times') 
   }
-  if(all(starts<ends)){
+  if(!all(starts<ends)){
     stop('end_times not later than start_times') 
   }    
-  if(all(lubridate::is.POSIXct(starts)) & 
-     all(lubridate::is.POSIXct(ends))){
+  if(!(all(lubridate::is.POSIXct(starts)) & 
+       all(lubridate::is.POSIXct(ends)))){
     stop('all times must be POSIXct') 
   }
   
@@ -299,26 +362,28 @@ check_start_end_times = function(starts,
 
 #' check if valid tuples; internal function
 #' @param time vector of times
-#' @param val vector of values
+#' @param val vector of value
 #' @param ids vector of ids
 #' 
 #' @noRd
-check_if_same_length = function(times,val,ids){
+CheckIfSameLength = function(times,val,ids){
   
-  if(length(times)==length(val)){
-    stop('the number of times does not equal number of values') 
-  } else if (length(ids)==length(ends)){
+  if(!length(times)==length(val)){
+    stop('the number of times does not equal number of value') 
+  } else if (!length(ids)==length(val)){
     stop('the number of times does not equal number of IDs')     
   }
+  
 }
 
 #' check if valid 'aggregration_type' argument; internal function
 #' @param time vector of times
-#' @param val vector of values
+#' @param val vector of value
 #' @param ids vector of ids
 #' 
 #' @noRd
-check_aggregration_type=function(x){
+CheckAggregrationType=function(x){
+  
   if(!length(x)==1){
     stop("please provide (only) one aggregation type")
   } 

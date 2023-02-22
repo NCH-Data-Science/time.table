@@ -10,12 +10,13 @@ PutOnTimeTable(
   datetimes = NULL,
   var_name = NULL,
   duration_hr = NA,
-  sample_interval_minute = 30,
+  sample_interval_minute = NULL,
   aggregration_type = "latest",
   Template = NULL,
   start_times = NULL,
   end_times = NULL,
-  IDs_times = NULL
+  IDs_times = NULL,
+  feature_type = "static"
 )
 }
 \arguments{

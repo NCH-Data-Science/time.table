@@ -35,7 +35,8 @@ head(df_admit_discharge)
 
 # Create Time Table Template 
 
-this specifics the start & end of each IDs times and is used to create a skeleton in which.
+this specifics the start & end times of each IDs table. This template will be the scaffold in which variables will be added to a timetable.
+
 ```{r}
 
 TimeTableTempl = TimeTableR::GetTimeTableTemplate(start_times = df_admit_discharge$admit,

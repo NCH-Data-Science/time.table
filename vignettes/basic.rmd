@@ -18,14 +18,16 @@ knitr::opts_chunk$set(
 
 ```
 
-# Example Data
+# Example Data 
 
 ```{r}
 # 
-# library(TimeTable)
+library(time.table)
 library(data.table)
 library(table.express)
-library(time.table)
+#library(time.table)
+# devtools::load_all()
+
 df_admit_discharge = data.frame(patient_id=paste0("pat_",1:2),
                                 admit=c(as.POSIXct("2012-03-12 12:12:12"),
                                         as.POSIXct("2012-03-13 11:11:11")),
@@ -35,7 +37,7 @@ df_admit_discharge = data.frame(patient_id=paste0("pat_",1:2),
 head(df_admit_discharge)
 ```
 
-# Create Time Table Template 
+# Create TimeTable Template 
 
 this specifics the start & end times of each IDs table. This template will be the scaffold in which variables will be added to a timetable.
 
@@ -52,7 +54,7 @@ head(TimeTableTempl)
 
 
 
-# Add a Variable feature to the Time Table
+# Add Static feature to a TimeTable
 
 First, we'll generate some fake data for our two patients. In this example, a patient's heart rate is measured every few hours.
 
@@ -84,7 +86,7 @@ head(df_heartrate)
 
 ```{r}
 
-heart_rate_tt = time.table::PutOnTimeTable(values = df_heartrate$heart_rate,
+heart_rate_tt = time.table::PutOnTimeTable(value = df_heartrate$heart_rate,
                                            datetimes = df_heartrate$times,
                                            IDs = df_heartrate$IDs,
                                            var_name = "heart_rate",
@@ -97,7 +99,7 @@ heart_rate_tt = time.table::PutOnTimeTable(values = df_heartrate$heart_rate,
 head(heart_rate_tt)
 ```
 
-# Add Static feature to the Time Table 
+# Add Static feature to a TimeTable
 
 ```{r}
 
@@ -119,7 +121,7 @@ df_sex = data.frame(IDs=c(ID_pat_1,ID_pat_2),
 
 head(df_sex)
 
-sex_tt = PutOnTimeTable(values = df_sex$value,
+sex_tt = PutOnTimeTable(value = df_sex$value,
                         datetimes = df_sex$datetimes,
                         IDs = df_sex$IDs,
                         var_name = "sex",
@@ -150,23 +152,4 @@ head(tt)
 CombineTimeTables(c("sex_tt","heart_rate_tt"),
                   join_type='right_join') 
 
-```
-
-## Benchmarking Join Types
-```{r}
-library(microbenchmark)
-
-mbm <- microbenchmark("right_join" = { 
-  CombineTimeTables(c("sex_tt","heart_rate_tt"), 
-                    join_type='right_join') },
-  "cbind" = {
-    CombineTimeTables(c("sex_tt","heart_rate_tt"),
-                      join_type='cbind')
-  },
-  "cbind_fast" = {
-    CombineTimeTables(c("sex_tt","heart_rate_tt"),
-                      join_type='cbind_fast')
-  })
-
-mbm
 ```

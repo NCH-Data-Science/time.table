@@ -5,8 +5,8 @@
 \title{Put Variable on TimeTable}
 \usage{
 PutOnTimeTable(
-  values,
-  IDs,
+  value = NULL,
+  IDs = NULL,
   datetimes = NULL,
   var_name = NULL,
   duration = Inf,
@@ -19,7 +19,7 @@ PutOnTimeTable(
 )
 }
 \arguments{
-\item{values}{a vector of values to be added to the time table.}
+\item{value}{a vector of value to be added to the time table.}
 
 \item{IDs}{a vector of IDs associated with each value in value.}
 
@@ -27,13 +27,13 @@ PutOnTimeTable(
 
 \item{var_name}{a scalar string of the name of the variable to be added.}
 
-\item{duration}{the time (and the respective units) for which a variable's value can be carried forward before it is considered missing data. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.}
+\item{duration}{the time (and the respective units) for which a variable's value can be carried forward before it is considered missing data. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'. This variable is parsed by  \link[lubridate]{period}.}
 
-\item{sample_interval}{a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.}
+\item{sample_interval}{a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'. This variable is parsed by \link[lubridate]{period}.}
 
 \item{aggregration_type}{how to handle multiple measurements for same time point; 'latest' or 'mean'}
 
-\item{Template}{the time grid 'Template' precomputed from GetTimeTableTemplate()}
+\item{Template}{the time grid 'Template' precomputed from \code{GetTimeTableTemplate()}.}
 
 \item{start_times}{optional argument used if 'Template' is NULL vector of date times denoting the 'end' of a time series.}
 

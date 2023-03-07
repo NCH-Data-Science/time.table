@@ -18,10 +18,10 @@ GetTimeTableTemplate(
 
 \item{IDs}{vector of ID associated with each discrete time series. If null, each start/end time pair is given a unique ID.}
 
-\item{sample_interval:}{a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.}
+\item{sample_interval}{a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.  This variable is parsed by the function \link[lubridate]{period}.}
 }
 \value{
-long table of variables, time points at every \code{sample_interval} from  start_times to end_times
+long table of variables, time points at every sample_interval from  start_times to end_times
 }
 \description{
 creates a uniformly-spaced discrete-time grid data.table on which all other variables are appended to.

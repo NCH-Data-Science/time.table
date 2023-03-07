@@ -1,10 +1,10 @@
-Package: TimeTableR
-Title: Data Wrangling for Data Tables of Discrete Time Series
+Package: Time.Table
+Title: Data Wrangling for data.tables of Time Series
 Version: 0.1.0
 Authors@R: 
     person("Brendan", "Galdo", , "Brendan.galdo@nationwidechildrens.org", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: A library for wrangling data tables of different variables measured over time and consolidating them into a common time table.
+Description: Often when dealing with messy, real-world time series data, we have many variables sampled at different frequencies or sampled intermittently. The 'Time.Table' library provides functions to easily wrangle these different variables into a uniformly-spaced tabular format. This package use the high-performance, memory efficient 'data.table' as a backend.
 Imports: 
     table.express,
     lubridate,

@@ -1,12 +1,11 @@
 .datatable.aware <- TRUE
 
-#' creates a sequence of times uniformally spaced for an ID
-#' @param  x data.frame from created mid GetTimeTableTemplate
-#' @param  si see sample_interval_minute in `GetTimeTableTemplate`
+#' creates a sequence of times uniformally-spaced for an ID
+#' @param  x data.frame from created mid GetTime.TableTemplate
+#' @param  si see sample_interval in `GetTime.TableTemplate`
 #' @noRd
 ExpandTimes=function(x,si){
   
-  si =  paste0(si," min")
   
   times = seq(lubridate::ceiling_date(x[,"start_times"],unit = si),
               lubridate::ceiling_date(x[,"end_times"],unit = si),,
@@ -21,22 +20,22 @@ ExpandTimes=function(x,si){
 #' internal last observed carried forward, used for non-numeric data type 
 #' @param x
 #' @noRd
-char_locf <- function(x) {
+CharLOCF <- function(x) {
   y <- !is.na(x)
   c(NA, x[y])[cumsum(y)+1]
 }
 
-#' creates a uniformly-spaced discrete-time grid data.table on which all other variables append to.
+#' creates a uniformly-spaced discrete-time grid data.table on which all other variables are appended to.
 #' @param start_times vector of date times denoting the 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
 #' @param end_times vector of date times denoting the 'end' of a time series  (e.g. the end of a patient's stay in the ICU) 
 #' @param IDs vector of ID associated with each discrete time series. If null, each start/end time pair is given a unique ID.
-#' @param sample_interval_minute: a scalar integer denoting the number of minutes between each time grid point in the time table.
-#' @return long tables of variables, time points at every `sample_interval_minute` from  start_times to end_times
+#' @param sample_interval: a string that denotes the time (and the respective units) between each index in the time.table. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
+#' @return long table of variables, time points at every `sample_interval` from  start_times to end_times
 #' @export
-GetTimeTableTemplate <- function(start_times = NULL,
-                                 end_times = NULL,
-                                 IDs = NULL, 
-                                 sample_interval_minute = 30) { 
+GetTime.TableTemplate <- function(start_times = NULL,
+                                  end_times = NULL,
+                                  IDs = NULL, 
+                                  sample_interval = "30 minutes") { 
   
   
   
@@ -44,7 +43,7 @@ GetTimeTableTemplate <- function(start_times = NULL,
   ######
   # error checking
   #######
-  CheckSampleIntMin(sample_interval_minute)
+  CheckSampleInt(sample_interval)
   CheckStartEndTimes(start_times,
                      end_times)
   if(is.null(IDs)){
@@ -63,14 +62,14 @@ GetTimeTableTemplate <- function(start_times = NULL,
   
   grid_df =
     ExpandTimes(time_df[1,],
-                si = sample_interval_minute)
-  
-  for(i in 2:nrow(time_df)){
-    grid_df = rbind(grid_df,
-                    ExpandTimes(time_df[i,],
-                                si = sample_interval_minute))
+                si = sample_interval)
+  if(length(IDs)>1){
+    for(i in 2:nrow(time_df)){
+      grid_df = rbind(grid_df,
+                      ExpandTimes(time_df[i,],
+                                  si = sample_interval))
+    }
   }
-  
   grid_dt <- grid_df |> data.table::as.data.table()
   colnames(grid_dt) = c("IDs", "grid_datetimes")
   
@@ -81,14 +80,14 @@ GetTimeTableTemplate <- function(start_times = NULL,
 #' GetLOCFvalue; internal function
 #' 
 #' @param x vector of date times for 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
-#' @param sample_interval_minute scalar time between one time grid point and another (in minutes)
-#' @param duration_hr a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.
+#' @param sample_interval scalar time between one time grid point and another
+#' @param duration the time in which a variable's value can be carried forward before it is considered missing data. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
 #' @return a vector where Last Observed Carry Forward
 #' 
 #' @noRd
 GetLOCFvalue <- function(x,
-                         sample_interval_minute = 5,
-                         duration_hr = 24) {
+                         sample_interval = 5,
+                         duration = 24) {
   
   # find the na indices for LOCF (Last observation carried forward)
   # and carry forward unexpired observed value
@@ -100,13 +99,13 @@ GetLOCFvalue <- function(x,
   if(!(length(x$value)==sum(is.na(x$value)))){
     
     # because were already on the grid, we know each of the indices are one 
-    # sample_interval_minute apart. we can think of 'duration' in terms of
+    # sample_interval apart. we can think of 'duration' in terms of
     # indices and find which indices we can carry over before duration has expired
     
-    if(is.finite(duration_hr)){
+    if(is.finite(duration)){
       
-      max_carry_over_indices = base::floor(as.numeric((duration_hr*60)/
-                                                        sample_interval_minute))
+      max_carry_over_indices = base::floor(as.numeric((lubridate::period(duration)/
+                                                         lubridate::period(sample_interval))))
     } else {
       
       max_carry_over_indices = length(x$value)
@@ -122,6 +121,7 @@ GetLOCFvalue <- function(x,
       unique()
     
     n_len = length(x$value)
+    
     # find conjunction of actual indices and eligible indices (!indices > n_len)
     cond = ((1:n_len) %in% LOCF_idx)
     
@@ -129,7 +129,7 @@ GetLOCFvalue <- function(x,
       x$value[cond] = data.table::nafill(x$value[cond],
                                          type='locf')
     } else{
-      x$value[cond] = char_locf(x$value[cond])
+      x$value[cond] = CharLOCF(x$value[cond])
     }
   } else {
     warning('warning: a variable has only NA values for an ID')
@@ -139,29 +139,29 @@ GetLOCFvalue <- function(x,
 }
 
 
-#' Put Variable on time table
+#' Put Variable on time.table
 #' 
 #' @param values  a vector of values to be added to the time table.
 #' @param IDs  a vector of IDs associated with each value in value.
 #' @param datetimes a vector of date-time objects associated with each value in value.
 #' @param var_name a scalar string of the name of the variable to be added.
-#' @param duration_hr a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.
-#' @param sample_interval_minute  a scalar integer denoting the number of minutes between each time grid point in the time table.
+#' @param duration the time (and the respective units) for which a variable's value can be carried forward before it is considered missing data. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
+#' @param sample_interval a string that denotes the time (and the respective units) between each index in the time.table. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
 #' @param aggregration_type how to handle multiple measurements for same time point; 'latest' or 'mean'
-#' @param Template the time grid 'Template' precomputed from GetTimeTableTemplate() 
+#' @param Template the time grid 'Template' precomputed from GetTime.TableTemplate() 
 #' @param start_times optional argument used if 'Template' is NULL vector of date times denoting the 'end' of a time series.
 #' @param end_times optional argument used if 'Template' is NULL, vector of date times denoting the 'start' of a time series.
 #' @param IDs_times optional argument used if 'Template' is NULL, vector of IDs associated with each start and end time.
 #' @return a data.table with value on a discrete time grids
 #' 
 #' @export
-PutOnTimeTable=function(
+PutOnTime.Table=function(
     values,
     IDs,
     datetimes = NULL,
     var_name = NULL,
-    duration_hr = Inf,
-    sample_interval_minute = NULL,
+    duration = Inf,
+    sample_interval = NULL,
     aggregration_type = "latest",
     Template = NULL,
     start_times = NULL,
@@ -174,21 +174,21 @@ PutOnTimeTable=function(
   ##################
   ## error checking
   ##################
-  if(!is.finite(duration_hr)){
-    duration_hr = Inf
+  if(!is.finite(duration)){
+    duration = Inf
   } 
   
   # check if sample interval valid
-  CheckSampleIntMin(sample_interval_minute)
+  CheckSampleInt(sample_interval)
   
   # check if all grid variables are same length
   CheckIfSameLength(datetimes,values,IDs)
   
   if(is.null(Template)){
-    Template <- GetTimeTableTemplate(start_times = start_times,
-                                     end_times = end_times,
-                                     sample_interval_minute = sample_interval_minute,
-                                     IDs = IDs_times)
+    Template <- GetTime.TableTemplate(start_times = start_times,
+                                      end_times = end_times,
+                                      sample_interval = sample_interval,
+                                      IDs = IDs_times)
   }
   
   IDs <- as.character(IDs)
@@ -200,7 +200,7 @@ PutOnTimeTable=function(
                   'datetimes' = datetimes)
   
   df = df |> table.express::mutate(grid_datetimes =
-                                     lubridate::ceiling_date(datetimes, unit = paste0(sample_interval_minute," min"))
+                                     lubridate::ceiling_date(datetimes, unit = sample_interval)
   ) |> 
     as.data.table()
   
@@ -228,8 +228,8 @@ PutOnTimeTable=function(
                                                         by=c('grid_datetimes','IDs')) },
                             grid_use=Template)
   
-  # # if a measurement is taken later than the start of the grid,
-  # # there are NAs for 'var_name', let's fix that
+  # if a measurement's associated time is later than the start of the grid
+  # there are NAs for 'var_name', let's fix that
   meas_name = names(measures_on_grid)
   n_meas = length(meas_name)
   n_row_grid = nrow(Template)
@@ -243,21 +243,43 @@ PutOnTimeTable=function(
     
     measures_on_grid[[i]] = lapply(temp,
                                    GetLOCFvalue,
-                                   sample_interval_minute = sample_interval_minute,
-                                   duration_hr=duration_hr) |> data.table::rbindlist()
+                                   sample_interval = sample_interval,
+                                   duration=duration) |> data.table::rbindlist()
   }
   out =  measures_on_grid |> data.table::rbindlist()
   return(out)
 }
 
-#' combine time tables
-#' 
-#' @param giver_tt a new timetable returned from 'PutOnTimeTable'
-#' @param reciever_tt a group of previously combined time tables or a new time table returned from 'PutOnTimeTable'
+
+#' Combine time.tables
+#' @param time.table_names character vector containing the name of strings
 #' @param join_type "right join", "cbind", "cbind_fast". "cbind_fast" is slightly more efficient but assumes everything is ordered properly, while "cbind" orders
-#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with TimeTables of unequal rows.
+#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with time.tables of unequal rows.
 #' @export
-CombineTimeTables=function(giver_tt,reciever_tt,join_type=c("right_join")){
+CombineTime.Tables = function(time.table_names,
+                              join_type=c("right_join")){
+  
+  n_tables = length(time.table_names)
+  if(n_tables>1){
+    out = Merge2Time.Tables(get(time.table_names[2]),get(time.table_names[1]),join_type)
+    if(n_tables>2){
+      for(i in 3:n_tables){
+        out = Merge2Time.Tables(get(time.table_names[i]),out,join_type)
+      }
+    }
+  } else {
+    stop("number of time.tables is less than 1")
+  }
+  return(out)
+}
+
+#' merge time tables
+#' 
+#' @param giver_tt a new time.table returned from 'PutOnTime.Table'
+#' @param reciever_tt a group of previously combined time tables or a new time table returned from 'PutOnTime.Table'
+#' @param join_type "right join", "cbind", "cbind_fast". "cbind_fast" is slightly more efficient but assumes everything is ordered properly, while "cbind" orders
+#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with Time.Tables of unequal rows.
+Merge2Time.Tables=function(giver_tt,reciever_tt,join_type=c("right_join")){
   
   if(join_type=="cbind"){
     if(!nrow(giver_tt ) == nrow(reciever_tt)){
@@ -296,45 +318,46 @@ CombineTimeTables=function(giver_tt,reciever_tt,join_type=c("right_join")){
   
 }
 
-#' Prep a timetable to be joined
-#' @param timetable a timetable
+#' Prep a time.table to be joined
+#' @param time.table a time.table
 #' @param keep_template preserve 'IDs' and 'grid_datetimes' columns
 #' @noRd
-PrepForJoin=function(timetable, keep_template=TRUE){
-  if(all(names(timetable) %in% c('var_name','IDs', 'value', 'grid_datetimes'))){
+PrepForJoin=function(time.table, keep_template=TRUE){
+  if(all(names(time.table) %in% c('var_name','IDs', 'value', 'grid_datetimes'))){
     
-    var_name = timetable[1,'var_name'] |> as.character()
+    var_name = time.table[1,'var_name'] |> as.character()
     
     if(keep_template){
-      timetable=timetable[,list(value,IDs,grid_datetimes)]
+      time.table=time.table[,list(value,IDs,grid_datetimes)]
     } else {
-      timetable=timetable[,list(value)]
+      time.table=time.table[,list(value)]
     }
     
-    names(timetable)[names(timetable) == "value"] <- var_name
+    names(time.table)[names(time.table) == "value"] <- var_name
   } 
   
-  return(timetable)
+  return(time.table)
 }
 
-#' CheckSampleIntMin; internal function
+#' CheckSampleInt; internal function
 #' 
 #' @param starts vector of start times
 #' @param ends vector of end times
 #' 
 #' @noRd
-CheckSampleIntMin = function(x){
+CheckSampleInt = function(x){
   
   if(!length(x)==1){
     stop("ERROR: no or multiple sample_interval_min passed")
     
-  } else if(!is.finite(x)){
-    stop("ERROR: sample_interval_min is not a finite numeric value")
-    
-  } else if(x<0){
-    stop("ERROR: sample_interval_min is not positive")
-    
   } 
+  # else if(!is.finite(x)){
+  #   stop("ERROR: sample_interval_min is not a finite numeric value")
+  #   
+  # } else if(x<0){
+  #   stop("ERROR: sample_interval_min is not positive")
+  #   
+  # } 
   return(x)
 }
 
@@ -351,14 +374,15 @@ CheckStartEndTimes = function(starts,
     stop('the number of start_times does not equal number of end_times') 
   }
   if(!all(starts<ends)){
-    stop('end_times not later than start_times') 
-  }    
+    
+    stop(paste0('end_times not later than start_times',"check starts with index: ", which(!starts<ends)) 
+         }    
   if(!(all(lubridate::is.POSIXct(starts)) & 
        all(lubridate::is.POSIXct(ends)))){
     stop('all times must be POSIXct') 
   }
   
-}
+  }
 
 #' check if valid tuples; internal function
 #' @param time vector of times

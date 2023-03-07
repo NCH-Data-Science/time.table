@@ -10,18 +10,22 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
 ```
 
 # Example Data
 
-```{r }
+```{r}
+
 library(TimeTableR)
 library(data.table)
 library(table.express)
+
 # library(devtools)
 # load_all()
 df_admit_discharge = data.frame(patient_id=paste0("pat_",1:2),

@@ -2,13 +2,13 @@
 % Please edit documentation in R/functions.R
 \name{GetTimeTableTemplate}
 \alias{GetTimeTableTemplate}
-\title{creates a uniformly-spaced discrete-time grid data.table on which all other variables append to.}
+\title{creates a uniformly-spaced discrete-time grid data.table on which all other variables are appended to.}
 \usage{
 GetTimeTableTemplate(
   start_times = NULL,
   end_times = NULL,
   IDs = NULL,
-  sample_interval_minute = 30
+  sample_interval = "30 minutes"
 )
 }
 \arguments{
@@ -18,11 +18,11 @@ GetTimeTableTemplate(
 
 \item{IDs}{vector of ID associated with each discrete time series. If null, each start/end time pair is given a unique ID.}
 
-\item{sample_interval_minute:}{a scalar integer denoting the number of minutes between each time grid point in the time table.}
+\item{sample_interval:}{a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.}
 }
 \value{
-long tables of variables, time points at every \code{sample_interval_minute} from  start_times to end_times
+long table of variables, time points at every \code{sample_interval} from  start_times to end_times
 }
 \description{
-creates a uniformly-spaced discrete-time grid data.table on which all other variables append to.
+creates a uniformly-spaced discrete-time grid data.table on which all other variables are appended to.
 }

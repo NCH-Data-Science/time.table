@@ -1,10 +1,10 @@
 ---
-title: "Basics of TimeTableR"
+title: "Basics of TimeTable"
 author: "Brendan Matthew Galdo"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Basics of TimeTableR}
+  %\VignetteIndexEntry{Basics of TimeTable}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,13 +21,11 @@ knitr::opts_chunk$set(
 # Example Data
 
 ```{r}
-
-library(TimeTableR)
+# 
+# library(TimeTable)
 library(data.table)
 library(table.express)
-
-# library(devtools)
-# load_all()
+library(time.table)
 df_admit_discharge = data.frame(patient_id=paste0("pat_",1:2),
                                 admit=c(as.POSIXct("2012-03-12 12:12:12"),
                                         as.POSIXct("2012-03-13 11:11:11")),
@@ -43,10 +41,10 @@ this specifics the start & end times of each IDs table. This template will be th
 
 ```{r}
 
-TimeTableTempl = TimeTableR::GetTimeTableTemplate(start_times = df_admit_discharge$admit,
+TimeTableTempl = time.table::GetTimeTableTemplate(start_times = df_admit_discharge$admit,
                                                   end_times = df_admit_discharge$discharge,
                                                   IDs = df_admit_discharge$patient_id,
-                                                  sample_interval_minute=60 # grid point at every 60th minute 
+                                                  sample_interval= "60 min" # grid point at every 60th minute 
 )
 
 head(TimeTableTempl)
@@ -86,14 +84,14 @@ head(df_heartrate)
 
 ```{r}
 
-heart_rate_tt = TimeTableR::PutOnTimeTable(values = df_heartrate$heart_rate,
+heart_rate_tt = time.table::PutOnTimeTable(values = df_heartrate$heart_rate,
                                            datetimes = df_heartrate$times,
                                            IDs = df_heartrate$IDs,
                                            var_name = "heart_rate",
                                            Template = TimeTableTempl, # pass template from section one
-                                           sample_interval_minute = 60,
+                                           sample_interval = "60 min",
                                            aggregration_type = "mean", #how to handle multiple measurements for same time point
-                                           duration_hr = 2 # assume measures are carried forward 2 hours if no new measurement
+                                           duration  = "2 hours"# assume measures are carried forward 2 hours if no new measurement
 )
 
 head(heart_rate_tt)
@@ -126,9 +124,9 @@ sex_tt = PutOnTimeTable(values = df_sex$value,
                         IDs = df_sex$IDs,
                         var_name = "sex",
                         Template = TimeTableTempl, # pass template from section one 
-                        sample_interval_minute = 60, 
+                        sample_interval = "60 min", 
                         aggregration_type = "latest", # how to handle multiple measurements for same time point 
-                        duration_hr = NA # a measure doesn't expire here since it's static 
+                        duration = NA # a measure doesn't expire here since it's static 
                         # both 'NA' or 'Inf' would work here.
 )
 
@@ -140,8 +138,7 @@ head(sex_tt)
 ## Cbind
 ```{r}
 # 
-tt = CombineTimeTables(giver_tt = sex_tt,
-                       reciever_tt = heart_rate_tt,
+tt = CombineTimeTables(c("sex_tt","heart_rate_tt"),
                        join_type='cbind')
 
 head(tt)
@@ -150,8 +147,7 @@ head(tt)
 ## Right Join
 ```{r}
 
-CombineTimeTables(giver_tt = sex_tt,
-                  reciever_tt = heart_rate_tt, 
+CombineTimeTables(c("sex_tt","heart_rate_tt"),
                   join_type='right_join') 
 
 ```
@@ -161,17 +157,14 @@ CombineTimeTables(giver_tt = sex_tt,
 library(microbenchmark)
 
 mbm <- microbenchmark("right_join" = { 
-  CombineTimeTables(giver_tt = sex_tt,
-                    reciever_tt = heart_rate_tt, 
+  CombineTimeTables(c("sex_tt","heart_rate_tt"), 
                     join_type='right_join') },
   "cbind" = {
-    CombineTimeTables(giver_tt = sex_tt,
-                      reciever_tt = heart_rate_tt,
+    CombineTimeTables(c("sex_tt","heart_rate_tt"),
                       join_type='cbind')
   },
   "cbind_fast" = {
-    CombineTimeTables(giver_tt = sex_tt,
-                      reciever_tt = heart_rate_tt,
+    CombineTimeTables(c("sex_tt","heart_rate_tt"),
                       join_type='cbind_fast')
   })
 

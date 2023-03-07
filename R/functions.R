@@ -1,14 +1,13 @@
 .datatable.aware <- TRUE
 
 #' creates a sequence of times uniformally-spaced for an ID
-#' @param  x data.frame from created mid GetTime.TableTemplate
-#' @param  si see sample_interval in `GetTime.TableTemplate`
+#' @param  x data.frame from created mid GetTimeTableTemplate
+#' @param  si see sample_interval in `GetTimeTableTemplate`
 #' @noRd
 ExpandTimes=function(x,si){
   
-  
   times = seq(lubridate::ceiling_date(x[,"start_times"],unit = si),
-              lubridate::ceiling_date(x[,"end_times"],unit = si),,
+              lubridate::ceiling_date(x[,"end_times"],unit = si),
               by = si )
   
   df = data.frame(IDs = rep(x[,"IDs"],
@@ -18,7 +17,7 @@ ExpandTimes=function(x,si){
 }
 
 #' internal last observed carried forward, used for non-numeric data type 
-#' @param x
+#' @param x vector for LOCF
 #' @noRd
 CharLOCF <- function(x) {
   y <- !is.na(x)
@@ -29,10 +28,10 @@ CharLOCF <- function(x) {
 #' @param start_times vector of date times denoting the 'start' of a time series (e.g. the start of a patient's stay in the ICU) 
 #' @param end_times vector of date times denoting the 'end' of a time series  (e.g. the end of a patient's stay in the ICU) 
 #' @param IDs vector of ID associated with each discrete time series. If null, each start/end time pair is given a unique ID.
-#' @param sample_interval: a string that denotes the time (and the respective units) between each index in the time.table. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
+#' @param sample_interval: a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
 #' @return long table of variables, time points at every `sample_interval` from  start_times to end_times
 #' @export
-GetTime.TableTemplate <- function(start_times = NULL,
+GetTimeTableTemplate <- function(start_times = NULL,
                                   end_times = NULL,
                                   IDs = NULL, 
                                   sample_interval = "30 minutes") { 
@@ -139,23 +138,23 @@ GetLOCFvalue <- function(x,
 }
 
 
-#' Put Variable on time.table
+#' Put Variable on TimeTable
 #' 
 #' @param values  a vector of values to be added to the time table.
 #' @param IDs  a vector of IDs associated with each value in value.
 #' @param datetimes a vector of date-time objects associated with each value in value.
 #' @param var_name a scalar string of the name of the variable to be added.
 #' @param duration the time (and the respective units) for which a variable's value can be carried forward before it is considered missing data. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
-#' @param sample_interval a string that denotes the time (and the respective units) between each index in the time.table. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
+#' @param sample_interval a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.
 #' @param aggregration_type how to handle multiple measurements for same time point; 'latest' or 'mean'
-#' @param Template the time grid 'Template' precomputed from GetTime.TableTemplate() 
+#' @param Template the time grid 'Template' precomputed from GetTimeTableTemplate() 
 #' @param start_times optional argument used if 'Template' is NULL vector of date times denoting the 'end' of a time series.
 #' @param end_times optional argument used if 'Template' is NULL, vector of date times denoting the 'start' of a time series.
 #' @param IDs_times optional argument used if 'Template' is NULL, vector of IDs associated with each start and end time.
 #' @return a data.table with value on a discrete time grids
 #' 
 #' @export
-PutOnTime.Table=function(
+PutOnTimeTable=function(
     values,
     IDs,
     datetimes = NULL,
@@ -185,7 +184,7 @@ PutOnTime.Table=function(
   CheckIfSameLength(datetimes,values,IDs)
   
   if(is.null(Template)){
-    Template <- GetTime.TableTemplate(start_times = start_times,
+    Template <- GetTimeTableTemplate(start_times = start_times,
                                       end_times = end_times,
                                       sample_interval = sample_interval,
                                       IDs = IDs_times)
@@ -251,35 +250,35 @@ PutOnTime.Table=function(
 }
 
 
-#' Combine time.tables
-#' @param time.table_names character vector containing the name of strings
+#' Combine TimeTables
+#' @param TimeTable_names character vector containing the name of strings
 #' @param join_type "right join", "cbind", "cbind_fast". "cbind_fast" is slightly more efficient but assumes everything is ordered properly, while "cbind" orders
-#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with time.tables of unequal rows.
+#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with TimeTables of unequal rows.
 #' @export
-CombineTime.Tables = function(time.table_names,
+CombineTimeTables = function(TimeTable_names,
                               join_type=c("right_join")){
   
-  n_tables = length(time.table_names)
+  n_tables = length(TimeTable_names)
   if(n_tables>1){
-    out = Merge2Time.Tables(get(time.table_names[2]),get(time.table_names[1]),join_type)
+    out = Merge2TimeTables(get(TimeTable_names[2]),get(TimeTable_names[1]),join_type)
     if(n_tables>2){
       for(i in 3:n_tables){
-        out = Merge2Time.Tables(get(time.table_names[i]),out,join_type)
+        out = Merge2TimeTables(get(TimeTable_names[i]),out,join_type)
       }
     }
   } else {
-    stop("number of time.tables is less than 1")
+    stop("number of TimeTables is less than 1")
   }
   return(out)
 }
 
 #' merge time tables
 #' 
-#' @param giver_tt a new time.table returned from 'PutOnTime.Table'
-#' @param reciever_tt a group of previously combined time tables or a new time table returned from 'PutOnTime.Table'
+#' @param giver_tt a new TimeTable returned from 'PutOnTimeTable'
+#' @param reciever_tt a group of previously combined time tables or a new time table returned from 'PutOnTimeTable'
 #' @param join_type "right join", "cbind", "cbind_fast". "cbind_fast" is slightly more efficient but assumes everything is ordered properly, while "cbind" orders
-#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with Time.Tables of unequal rows.
-Merge2Time.Tables=function(giver_tt,reciever_tt,join_type=c("right_join")){
+#'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with TimeTables of unequal rows.
+Merge2TimeTables=function(giver_tt,reciever_tt,join_type=c("right_join")){
   
   if(join_type=="cbind"){
     if(!nrow(giver_tt ) == nrow(reciever_tt)){
@@ -318,25 +317,25 @@ Merge2Time.Tables=function(giver_tt,reciever_tt,join_type=c("right_join")){
   
 }
 
-#' Prep a time.table to be joined
-#' @param time.table a time.table
+#' Prep a TimeTable to be joined
+#' @param TimeTable a TimeTable
 #' @param keep_template preserve 'IDs' and 'grid_datetimes' columns
 #' @noRd
-PrepForJoin=function(time.table, keep_template=TRUE){
-  if(all(names(time.table) %in% c('var_name','IDs', 'value', 'grid_datetimes'))){
+PrepForJoin=function(TimeTable, keep_template=TRUE){
+  if(all(names(TimeTable) %in% c('var_name','IDs', 'value', 'grid_datetimes'))){
     
-    var_name = time.table[1,'var_name'] |> as.character()
+    var_name = TimeTable[1,'var_name'] |> as.character()
     
     if(keep_template){
-      time.table=time.table[,list(value,IDs,grid_datetimes)]
+      TimeTable=TimeTable[,list(value,IDs,grid_datetimes)]
     } else {
-      time.table=time.table[,list(value)]
+      TimeTable=TimeTable[,list(value)]
     }
     
-    names(time.table)[names(time.table) == "value"] <- var_name
+    names(TimeTable)[names(TimeTable) == "value"] <- var_name
   } 
   
-  return(time.table)
+  return(TimeTable)
 }
 
 #' CheckSampleInt; internal function

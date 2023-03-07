@@ -2,35 +2,34 @@
 % Please edit documentation in R/functions.R
 \name{PutOnTimeTable}
 \alias{PutOnTimeTable}
-\title{Put Variable on time table}
+\title{Put Variable on TimeTable}
 \usage{
 PutOnTimeTable(
   values,
   IDs,
   datetimes = NULL,
   var_name = NULL,
-  duration_hr = NA,
-  sample_interval_minute = NULL,
+  duration = Inf,
+  sample_interval = NULL,
   aggregration_type = "latest",
   Template = NULL,
   start_times = NULL,
   end_times = NULL,
-  IDs_times = NULL,
-  feature_type = "static"
+  IDs_times = NULL
 )
 }
 \arguments{
 \item{values}{a vector of values to be added to the time table.}
 
-\item{IDs}{a vector of IDs associated with each value in values.}
+\item{IDs}{a vector of IDs associated with each value in value.}
 
-\item{datetimes}{a vector of date-time objects associated with each value in values.}
+\item{datetimes}{a vector of date-time objects associated with each value in value.}
 
 \item{var_name}{a scalar string of the name of the variable to be added.}
 
-\item{duration_hr}{a scalar integer denoting the number of hours for which a variable's value can be carried forward before it is considered missing data.}
+\item{duration}{the time (and the respective units) for which a variable's value can be carried forward before it is considered missing data. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.}
 
-\item{sample_interval_minute}{a scalar integer denoting the number of minutes between each time grid point in the time table.}
+\item{sample_interval}{a string that denotes the time (and the respective units) between each index in the TimeTable. All meaningful specifications in the English language are supported. Some example of valid inputs: '45 secs', '30 min', '22.2 mins', '2 minutes', or '3 years'.}
 
 \item{aggregration_type}{how to handle multiple measurements for same time point; 'latest' or 'mean'}
 
@@ -43,8 +42,8 @@ PutOnTimeTable(
 \item{IDs_times}{optional argument used if 'Template' is NULL, vector of IDs associated with each start and end time.}
 }
 \value{
-a data.table with values on a discrete time grids
+a data.table with value on a discrete time grids
 }
 \description{
-Put Variable on time table
+Put Variable on TimeTable
 }

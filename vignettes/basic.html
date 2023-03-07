@@ -12,9 +12,9 @@
 
 <meta name="author" content="Brendan Matthew Galdo" />
 
-<meta name="date" content="2023-02-22" />
+<meta name="date" content="2023-03-07" />
 
-<title>Basics of TimeTableR</title>
+<title>Basics of Time.Table</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -339,209 +339,214 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Basics of TimeTableR</h1>
+<h1 class="title toc-ignore">Basics of Time.Table</h1>
 <h4 class="author">Brendan Matthew Galdo</h4>
-<h4 class="date">2023-02-22</h4>
+<h4 class="date">2023-03-07</h4>
 
 
 
 <div id="example-data" class="section level1">
 <h1>Example Data</h1>
-<p>The figure sizes have been customized so that you can easily put two
-images side-by-side.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#library(TimeTableR)</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(table.express)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;table.express&#39;</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:stats&#39;:</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     filter</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Loading required package: usethis</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">load_all</span>()</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Loading TimeTableR</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>df_admit_discharge <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">patient_id=</span><span class="fu">paste0</span>(<span class="st">&quot;pat_&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>),</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                                <span class="at">admit=</span><span class="fu">c</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-12 12:12:12&quot;</span>),</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                                        <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-13 11:11:11&quot;</span>)),</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                                <span class="at">discharge=</span><span class="fu">c</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-3-20 12:12:12&quot;</span>),</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                                            <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-20 10:10:10&quot;</span>)))</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>TimeTableTempl <span class="ot">=</span> TimeTableR<span class="sc">::</span><span class="fu">GetTimeTableTemplate</span>(<span class="at">start_times =</span> df_admit_discharge<span class="sc">$</span>admit,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">end_times =</span> df_admit_discharge<span class="sc">$</span>discharge,</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">IDs =</span> df_admit_discharge<span class="sc">$</span>patient_id,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">sample_interval_minute=</span><span class="dv">60</span> <span class="co"># grid point at every 60th minute </span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(TimeTableTempl)</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      IDs      grid_datetimes</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1: pat_1 2012-03-12 13:00:00</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2: pat_1 2012-03-12 14:00:00</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3: pat_1 2012-03-12 15:00:00</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4: pat_1 2012-03-12 16:00:00</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5: pat_1 2012-03-12 17:00:00</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6: pat_1 2012-03-12 18:00:00</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># library(Time.Table)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(table.express)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;table.express&#39;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:stats&#39;:</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     filter</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Loading required package: usethis</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">load_all</span>()</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Loading Time.Table</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>df_admit_discharge <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">patient_id=</span><span class="fu">paste0</span>(<span class="st">&quot;pat_&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                                <span class="at">admit=</span><span class="fu">c</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-12 12:12:12&quot;</span>),</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                                        <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-13 11:11:11&quot;</span>)),</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                                <span class="at">discharge=</span><span class="fu">c</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-3-20 12:12:12&quot;</span>),</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                                            <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-20 10:10:10&quot;</span>)))</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df_admit_discharge)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   patient_id               admit           discharge</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1      pat_1 2012-03-12 12:12:12 2012-03-20 12:12:12</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      pat_2 2012-03-13 11:11:11 2012-03-20 10:10:10</span></span></code></pre></div>
+</div>
+<div id="create-time-table-template" class="section level1">
+<h1>Create Time Table Template</h1>
+<p>this specifics the start &amp; end times of each IDs table. This
+template will be the scaffold in which variables will be added to a
+timetable.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>TimeTableTempl <span class="ot">=</span> Time.Table<span class="sc">::</span><span class="fu">GetTime.TableTemplate</span>(<span class="at">start_times =</span> df_admit_discharge<span class="sc">$</span>admit,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">end_times =</span> df_admit_discharge<span class="sc">$</span>discharge,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">IDs =</span> df_admit_discharge<span class="sc">$</span>patient_id,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">sample_interval=</span> <span class="st">&quot;60 min&quot;</span> <span class="co"># grid point at every 60th minute </span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(TimeTableTempl)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      IDs      grid_datetimes</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1: pat_1 2012-03-12 13:00:00</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2: pat_1 2012-03-12 14:00:00</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3: pat_1 2012-03-12 15:00:00</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4: pat_1 2012-03-12 16:00:00</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5: pat_1 2012-03-12 17:00:00</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6: pat_1 2012-03-12 18:00:00</span></span></code></pre></div>
 </div>
 <div id="add-a-variable-feature-to-the-time-table" class="section level1">
 <h1>Add a Variable feature to the Time Table</h1>
 <p>First, we’ll generate some fake data for our two patients. In this
 example, a patient’s heart rate is measured every few hours.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 1</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>times_pat_1 <span class="ot">=</span> <span class="fu">seq</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-12 12:12:12&quot;</span>),</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-20 20:20:20&quot;</span>),</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">by=</span><span class="st">&quot;5 hours&quot;</span>) <span class="co"># patient 1 has their heart rate measured every 5 hours</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>values_pat_1 <span class="ot">=</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(times_pat_1),<span class="dv">80</span>,<span class="dv">20</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>ID_pat_1 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_1&quot;</span>,<span class="fu">length</span>(times_pat_1))</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 2</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>times_pat_2 <span class="ot">=</span> <span class="fu">seq</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-13 11:11:11&quot;</span>),</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-20 10:10:10&quot;</span>),</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">by=</span><span class="st">&quot;4 hours&quot;</span>) <span class="co"># patient 2 has their heart rate measured every 4 hours</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>values_pat_2 <span class="ot">=</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(times_pat_2),<span class="dv">70</span>,<span class="dv">10</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ID_pat_2 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_2&quot;</span>,<span class="fu">length</span>(times_pat_2))</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># let&#39;s store consolidate these into a data.frame</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>df_heartrate <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">IDs =</span> <span class="fu">c</span>(ID_pat_1,ID_pat_2),</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                          <span class="at">heart_rate =</span> <span class="fu">c</span>(values_pat_1,values_pat_2),</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                          <span class="at">times =</span> <span class="fu">c</span>(times_pat_1,times_pat_2))</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df_heartrate)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     IDs heart_rate               times</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 pat_1   36.14910 2012-03-12 12:12:12</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 pat_1   66.89511 2012-03-12 17:12:12</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 pat_1   55.36199 2012-03-12 22:12:12</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 pat_1   44.05960 2012-03-13 03:12:12</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 pat_1   99.23397 2012-03-13 08:12:12</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 pat_1   99.54700 2012-03-13 13:12:12</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>heart_rate_tt <span class="ot">=</span> TimeTableR<span class="sc">::</span><span class="fu">PutOnTimeTable</span>(<span class="at">values =</span> df_heartrate<span class="sc">$</span>heart_rate,</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">datetimes =</span> df_heartrate<span class="sc">$</span>times,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">IDs =</span> df_heartrate<span class="sc">$</span>IDs,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">var_name =</span> <span class="st">&quot;heart_rate&quot;</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">Template =</span> TimeTableTempl, <span class="co"># pass template from section one</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">sample_interval_minute =</span> <span class="dv">60</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">aggregration_type =</span> <span class="st">&quot;mean&quot;</span>, <span class="co">#how to handle multiple measurements for same time point</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">duration_hr =</span> <span class="dv">2</span> <span class="co"># assume measures are carried forward 2 hours if no new measurement</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(heart_rate_tt)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         grid_datetimes   IDs   var_name    value</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1: 2012-03-12 13:00:00 pat_1 heart_rate 36.14910</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2: 2012-03-12 14:00:00 pat_1 heart_rate 36.14910</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3: 2012-03-12 15:00:00 pat_1 heart_rate 36.14910</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4: 2012-03-12 16:00:00 pat_1 heart_rate       NA</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5: 2012-03-12 17:00:00 pat_1 heart_rate       NA</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6: 2012-03-12 18:00:00 pat_1 heart_rate 66.89511</span></span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 1</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>times_pat_1 <span class="ot">=</span> <span class="fu">seq</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-12 12:12:12&quot;</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-20 20:20:20&quot;</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">by=</span><span class="st">&quot;5 hours&quot;</span>) <span class="co"># patient 1 has their heart rate measured every 5 hours</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>values_pat_1 <span class="ot">=</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(times_pat_1),<span class="dv">80</span>,<span class="dv">20</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>ID_pat_1 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_1&quot;</span>,<span class="fu">length</span>(times_pat_1))</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 2</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>times_pat_2 <span class="ot">=</span> <span class="fu">seq</span>(<span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-13 11:11:11&quot;</span>),</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-20 10:10:10&quot;</span>),</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">by=</span><span class="st">&quot;4 hours&quot;</span>) <span class="co"># patient 2 has their heart rate measured every 4 hours</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>values_pat_2 <span class="ot">=</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(times_pat_2),<span class="dv">70</span>,<span class="dv">10</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>ID_pat_2 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_2&quot;</span>,<span class="fu">length</span>(times_pat_2))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># let&#39;s store consolidate these into a data.frame</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>df_heartrate <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">IDs =</span> <span class="fu">c</span>(ID_pat_1,ID_pat_2),</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                          <span class="at">heart_rate =</span> <span class="fu">c</span>(values_pat_1,values_pat_2),</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                          <span class="at">times =</span> <span class="fu">c</span>(times_pat_1,times_pat_2))</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df_heartrate)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     IDs heart_rate               times</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 pat_1   63.45611 2012-03-12 12:12:12</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 pat_1   53.32611 2012-03-12 17:12:12</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 pat_1   94.54854 2012-03-12 22:12:12</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 pat_1   74.45208 2012-03-13 03:12:12</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 pat_1   93.51019 2012-03-13 08:12:12</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 pat_1  109.69918 2012-03-13 13:12:12</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>heart_rate_tt <span class="ot">=</span> Time.Table<span class="sc">::</span><span class="fu">PutOnTime.Table</span>(<span class="at">values =</span> df_heartrate<span class="sc">$</span>heart_rate,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">datetimes =</span> df_heartrate<span class="sc">$</span>times,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">IDs =</span> df_heartrate<span class="sc">$</span>IDs,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">var_name =</span> <span class="st">&quot;heart_rate&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">Template =</span> TimeTableTempl, <span class="co"># pass template from section one</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">sample_interval =</span> <span class="st">&quot;60 min&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">aggregration_type =</span> <span class="st">&quot;mean&quot;</span>, <span class="co">#how to handle multiple measurements for same time point</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">duration  =</span> <span class="st">&quot;2 hours&quot;</span><span class="co"># assume measures are carried forward 2 hours if no new measurement</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(heart_rate_tt)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         grid_datetimes   IDs   var_name    value</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1: 2012-03-12 13:00:00 pat_1 heart_rate 63.45611</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2: 2012-03-12 14:00:00 pat_1 heart_rate 63.45611</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3: 2012-03-12 15:00:00 pat_1 heart_rate 63.45611</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4: 2012-03-12 16:00:00 pat_1 heart_rate 63.45611</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5: 2012-03-12 17:00:00 pat_1 heart_rate 63.45611</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6: 2012-03-12 18:00:00 pat_1 heart_rate 53.32611</span></span></code></pre></div>
 </div>
 <div id="add-static-feature-to-the-time-table" class="section level1">
 <h1>Add Static feature to the Time Table</h1>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 1</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>times_pat_1 <span class="ot">=</span> <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-12 12:12:12&quot;</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>values_pat_1 <span class="ot">=</span> <span class="st">&quot;male&quot;</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>ID_pat_1 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_1&quot;</span>,<span class="fu">length</span>(values_pat_1))</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 2</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>times_pat_2 <span class="ot">=</span> <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-13 11:11:11&quot;</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>values_pat_2 <span class="ot">=</span> <span class="st">&quot;female&quot;</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>ID_pat_2 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_2&quot;</span>,<span class="fu">length</span>(values_pat_2))</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># let&#39;s store consolidate these into a data.frame</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>df_sex <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">IDs=</span><span class="fu">c</span>(ID_pat_1,ID_pat_2),</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">value=</span><span class="fu">c</span>(values_pat_1,values_pat_2),</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                    <span class="at">datetimes=</span><span class="fu">c</span>(times_pat_1,times_pat_2))</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df_sex)</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     IDs  value           datetimes</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 pat_1   male 2012-03-12 12:12:12</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 pat_2 female 2012-03-13 11:11:11</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>sex_tt <span class="ot">=</span> <span class="fu">PutOnTimeTable</span>(<span class="at">values =</span> df_sex<span class="sc">$</span>value,</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                        <span class="at">datetimes =</span> df_sex<span class="sc">$</span>datetimes,</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                        <span class="at">IDs =</span> df_sex<span class="sc">$</span>IDs,</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>                        <span class="at">var_name =</span> <span class="st">&quot;sex&quot;</span>,</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>                        <span class="at">Template =</span> TimeTableTempl, <span class="co"># pass template from section one </span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>                        <span class="at">sample_interval_minute =</span> <span class="dv">60</span>, </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>                        <span class="at">aggregration_type =</span> <span class="st">&quot;latest&quot;</span>, <span class="co"># how to handle multiple measurements for same time point </span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>                        <span class="at">duration_hr =</span> <span class="cn">NA</span> <span class="co"># a measure doesn&#39;t expire here since it&#39;s static </span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># both &#39;NA&#39; or &#39;Inf&#39; would work here.</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(sex_tt)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    var_name   IDs value      grid_datetimes</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:      sex pat_1  male 2012-03-12 13:00:00</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2:      sex pat_1  male 2012-03-12 14:00:00</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3:      sex pat_1  male 2012-03-12 15:00:00</span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4:      sex pat_1  male 2012-03-12 16:00:00</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5:      sex pat_1  male 2012-03-12 17:00:00</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6:      sex pat_1  male 2012-03-12 18:00:00</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 1</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>times_pat_1 <span class="ot">=</span> <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-12 12:12:12&quot;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>values_pat_1 <span class="ot">=</span> <span class="st">&quot;male&quot;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>ID_pat_1 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_1&quot;</span>,<span class="fu">length</span>(values_pat_1))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># patient 2</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>times_pat_2 <span class="ot">=</span> <span class="fu">as.POSIXct</span>(<span class="st">&quot;2012-03-13 11:11:11&quot;</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>values_pat_2 <span class="ot">=</span> <span class="st">&quot;female&quot;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>ID_pat_2 <span class="ot">=</span> <span class="fu">rep</span>(<span class="st">&quot;pat_2&quot;</span>,<span class="fu">length</span>(values_pat_2))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># let&#39;s store consolidate these into a data.frame</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>df_sex <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">IDs=</span><span class="fu">c</span>(ID_pat_1,ID_pat_2),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">value=</span><span class="fu">c</span>(values_pat_1,values_pat_2),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                    <span class="at">datetimes=</span><span class="fu">c</span>(times_pat_1,times_pat_2))</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df_sex)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     IDs  value           datetimes</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 pat_1   male 2012-03-12 12:12:12</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 pat_2 female 2012-03-13 11:11:11</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>sex_tt <span class="ot">=</span> <span class="fu">PutOnTime.Table</span>(<span class="at">values =</span> df_sex<span class="sc">$</span>value,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>                        <span class="at">datetimes =</span> df_sex<span class="sc">$</span>datetimes,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                        <span class="at">IDs =</span> df_sex<span class="sc">$</span>IDs,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                        <span class="at">var_name =</span> <span class="st">&quot;sex&quot;</span>,</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>                        <span class="at">Template =</span> TimeTableTempl, <span class="co"># pass template from section one </span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>                        <span class="at">sample_interval =</span> <span class="st">&quot;60 min&quot;</span>, </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>                        <span class="at">aggregration_type =</span> <span class="st">&quot;latest&quot;</span>, <span class="co"># how to handle multiple measurements for same time point </span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>                        <span class="at">duration =</span> <span class="cn">NA</span> <span class="co"># a measure doesn&#39;t expire here since it&#39;s static </span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># both &#39;NA&#39; or &#39;Inf&#39; would work here.</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(sex_tt)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    var_name   IDs value      grid_datetimes</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:      sex pat_1  male 2012-03-12 13:00:00</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2:      sex pat_1  male 2012-03-12 14:00:00</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3:      sex pat_1  male 2012-03-12 15:00:00</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4:      sex pat_1  male 2012-03-12 16:00:00</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5:      sex pat_1  male 2012-03-12 17:00:00</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6:      sex pat_1  male 2012-03-12 18:00:00</span></span></code></pre></div>
 </div>
 <div id="combine-timetables-into-a-data.table" class="section level1">
 <h1>Combine TimeTables into a data.table</h1>
 <div id="cbind" class="section level2">
 <h2>Cbind</h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>tt <span class="ot">=</span> <span class="fu">CombineTimeTables</span>(<span class="at">giver_tt =</span> sex_tt,</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">reciever_tt =</span> heart_rate_tt,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">join_type=</span><span class="st">&#39;cbind&#39;</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tt)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     sex heart_rate   IDs      grid_datetimes</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1: male   36.14910 pat_1 2012-03-12 13:00:00</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2: male   36.14910 pat_1 2012-03-12 14:00:00</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3: male   36.14910 pat_1 2012-03-12 15:00:00</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4: male         NA pat_1 2012-03-12 16:00:00</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5: male         NA pat_1 2012-03-12 17:00:00</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6: male   66.89511 pat_1 2012-03-12 18:00:00</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>tt <span class="ot">=</span> <span class="fu">CombineTime.Tables</span>(<span class="fu">c</span>(<span class="st">&quot;sex_tt&quot;</span>,<span class="st">&quot;heart_rate_tt&quot;</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">join_type=</span><span class="st">&#39;cbind&#39;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tt)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    heart_rate  sex   IDs      grid_datetimes</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:   63.45611 male pat_1 2012-03-12 13:00:00</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2:   63.45611 male pat_1 2012-03-12 14:00:00</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3:   63.45611 male pat_1 2012-03-12 15:00:00</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4:   63.45611 male pat_1 2012-03-12 16:00:00</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5:   63.45611 male pat_1 2012-03-12 17:00:00</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6:   53.32611 male pat_1 2012-03-12 18:00:00</span></span></code></pre></div>
 </div>
 <div id="right-join" class="section level2">
 <h2>Right Join</h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">CombineTimeTables</span>(<span class="at">giver_tt =</span> sex_tt,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">reciever_tt =</span> heart_rate_tt, </span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">join_type=</span><span class="st">&#39;right_join&#39;</span>) </span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         sex   IDs      grid_datetimes heart_rate</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   1:   male pat_1 2012-03-12 13:00:00   36.14910</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   2:   male pat_1 2012-03-12 14:00:00   36.14910</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   3:   male pat_1 2012-03-12 15:00:00   36.14910</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   4:   male pat_1 2012-03-12 16:00:00         NA</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   5:   male pat_1 2012-03-12 17:00:00         NA</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  ---                                            </span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 357: female pat_2 2012-03-20 07:00:00         NA</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 358: female pat_2 2012-03-20 08:00:00   57.48044</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 359: female pat_2 2012-03-20 09:00:00   57.48044</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 360: female pat_2 2012-03-20 10:00:00   57.48044</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 361: female pat_2 2012-03-20 11:00:00         NA</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">CombineTime.Tables</span>(<span class="fu">c</span>(<span class="st">&quot;sex_tt&quot;</span>,<span class="st">&quot;heart_rate_tt&quot;</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">join_type=</span><span class="st">&#39;right_join&#39;</span>) </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      heart_rate   IDs      grid_datetimes    sex</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   1:   63.45611 pat_1 2012-03-12 13:00:00   male</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   2:   63.45611 pat_1 2012-03-12 14:00:00   male</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   3:   63.45611 pat_1 2012-03-12 15:00:00   male</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   4:   63.45611 pat_1 2012-03-12 16:00:00   male</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   5:   63.45611 pat_1 2012-03-12 17:00:00   male</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  ---                                            </span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 357:   88.98442 pat_2 2012-03-20 07:00:00 female</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 358:   80.46074 pat_2 2012-03-20 08:00:00 female</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 359:   80.46074 pat_2 2012-03-20 09:00:00 female</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 360:   80.46074 pat_2 2012-03-20 10:00:00 female</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 361:   80.46074 pat_2 2012-03-20 11:00:00 female</span></span></code></pre></div>
 </div>
 <div id="benchmarking-join-types" class="section level2">
 <h2>Benchmarking Join Types</h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(microbenchmark)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>mbm <span class="ot">&lt;-</span> <span class="fu">microbenchmark</span>(<span class="st">&quot;right_join&quot;</span> <span class="ot">=</span> { </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">CombineTimeTables</span>(<span class="at">giver_tt =</span> sex_tt,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">reciever_tt =</span> heart_rate_tt, </span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">join_type=</span><span class="st">&#39;right_join&#39;</span>) },</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;cbind&quot;</span> <span class="ot">=</span> {</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CombineTimeTables</span>(<span class="at">giver_tt =</span> sex_tt,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                      <span class="at">reciever_tt =</span> heart_rate_tt,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                      <span class="at">join_type=</span><span class="st">&#39;cbind&#39;</span>)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  },</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;cbind_fast&quot;</span> <span class="ot">=</span> {</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CombineTimeTables</span>(<span class="at">giver_tt =</span> sex_tt,</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>                      <span class="at">reciever_tt =</span> heart_rate_tt,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                      <span class="at">join_type=</span><span class="st">&#39;cbind_fast&#39;</span>)</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>mbm</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Unit: milliseconds</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        expr      min       lq     mean   median       uq      max neval</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  right_join 2.539168 2.632438 2.826960 2.714084 2.863605 5.684084   100</span></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       cbind 1.163751 1.221042 1.342227 1.248521 1.314084 4.507125   100</span></span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  cbind_fast 1.009959 1.052792 1.133356 1.082751 1.133001 3.946626   100</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(microbenchmark)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>mbm <span class="ot">&lt;-</span> <span class="fu">microbenchmark</span>(<span class="st">&quot;right_join&quot;</span> <span class="ot">=</span> { </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">CombineTime.Tables</span>(<span class="fu">c</span>(<span class="st">&quot;sex_tt&quot;</span>,<span class="st">&quot;heart_rate_tt&quot;</span>), </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">join_type=</span><span class="st">&#39;right_join&#39;</span>) },</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;cbind&quot;</span> <span class="ot">=</span> {</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CombineTime.Tables</span>(<span class="fu">c</span>(<span class="st">&quot;sex_tt&quot;</span>,<span class="st">&quot;heart_rate_tt&quot;</span>),</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                      <span class="at">join_type=</span><span class="st">&#39;cbind&#39;</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  },</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;cbind_fast&quot;</span> <span class="ot">=</span> {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">CombineTime.Tables</span>(<span class="fu">c</span>(<span class="st">&quot;sex_tt&quot;</span>,<span class="st">&quot;heart_rate_tt&quot;</span>),</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                      <span class="at">join_type=</span><span class="st">&#39;cbind_fast&#39;</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>mbm</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Unit: milliseconds</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        expr      min       lq     mean   median       uq      max neval</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  right_join 2.560751 2.707147 2.962699 2.816959 3.001043 6.003626   100</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       cbind 1.166251 1.222854 1.316131 1.286105 1.358188 2.370667   100</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  cbind_fast 1.029876 1.104584 1.237659 1.151250 1.189667 5.250459   100</span></span></code></pre></div>
 </div>
 </div>
 

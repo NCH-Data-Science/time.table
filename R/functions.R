@@ -374,15 +374,16 @@ CheckStartEndTimes = function(starts,
     stop('the number of start_times does not equal number of end_times') 
   }
   if(!all(starts<ends)){
-    
-    stop(paste0('end_times not later than start_times',"check starts with index: ", which(!starts<ends)) 
-         }    
+    stop(paste0('end_times not later than start_times',"check starts with index: ", which(!starts<ends))) 
+  }    
   if(!(all(lubridate::is.POSIXct(starts)) & 
        all(lubridate::is.POSIXct(ends)))){
     stop('all times must be POSIXct') 
   }
   
-  }
+}
+
+
 
 #' check if valid tuples; internal function
 #' @param time vector of times

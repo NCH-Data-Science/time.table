@@ -142,7 +142,7 @@ GetLOCFvalue <- function(x,
 
 #' Put Variable on TimeTable
 #' 
-#' @param value  a vector of value to be added to the time table.
+#' @param values  a vector of values to be added to the time table.
 #' @param IDs  a vector of IDs associated with each value in value.
 #' @param datetimes a vector of date-time objects associated with each value in value.
 #' @param var_name a scalar string of the name of the variable to be added.
@@ -157,7 +157,7 @@ GetLOCFvalue <- function(x,
 #' 
 #' @export
 PutOnTimeTable=function(
-    value = NULL,
+    values = NULL,
     IDs = NULL,
     datetimes = NULL,
     var_name = NULL,
@@ -173,7 +173,8 @@ PutOnTimeTable=function(
   # stops CRAN check from complaining about 'no visible binding for global variable'
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   max_datetimes <- grid_datetimes <- NULL
-  
+  value <- values
+  rm(values)
   ##################
   ## error checking
   ##################

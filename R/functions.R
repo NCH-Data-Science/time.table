@@ -1,6 +1,6 @@
 .datatable.aware <- TRUE
 
-#' creates a sequence of times uniformally-spaced for an ID
+#' creates a sequence of times uniformly-spaced for an ID
 #' @param  x data.frame from created mid GetTimeTableTemplate
 #' @param  si see sample_interval in `GetTimeTableTemplate`
 #' @noRd
@@ -264,6 +264,7 @@ CombineTimeTables = function(TimeTable_names,
                               join_type=c("right_join")){
   
   n_tables = length(TimeTable_names)
+  
   if(n_tables>1){
     out = Merge2TimeTables(get(TimeTable_names[2]),get(TimeTable_names[1]),join_type)
     if(n_tables>2){

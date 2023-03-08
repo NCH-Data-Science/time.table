@@ -1,6 +1,6 @@
 Package: time.table
 Title: Data Wrangling for data.tables containing Time Series
-Version: 0.1.0
+Version: 0.3.0
 Authors@R: 
     person("Brendan", "Galdo", , "Brendan.galdo@nationwidechildrens.org", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))

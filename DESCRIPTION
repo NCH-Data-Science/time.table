@@ -4,7 +4,7 @@ Version: 0.3.1
 Authors@R: 
     person("Brendan", "Galdo", , "Brendan.galdo@nationwidechildrens.org", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: Often when dealing with messy, real-world time series data, we have many variables sampled at different frequencies or sampled intermittently. The 'time.table' library provides functions to easily wrangle these different variables into a uniformly-spaced tabular format. This package use the high-performance, memory efficient 'data.table' as a backend.
+Description: Often when dealing with messy, real-world time series data, we have many variables sampled at different frequencies or sampled intermittently. The 'time.table' library provides functions to easily wrangle these different variables into a uniformly-spaced tabular format. This package uses the high-performance, memory efficient 'data.table' as a backend.
 Imports: 
     table.express,
     lubridate,

@@ -20,9 +20,9 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-Often when dealing with messy, real-world time series data, we have many variables sampled at different frequencies or sampled intermittently. The 'time.table' library provides functions to easily wrangle these different variables into a uniformly-spaced tabular format. 'time.table' is a library built around the popular high-performance data manipulation library 'data.table'.
+Often when dealing with messy, real-world time series data, we have many variables sampled at different frequencies or sampled intermittently. The 'time.table' library provides functions to easily wrangle these different variables into a uniformly-spaced tabular format. 'time.table' is a library built around the popular, high-performance data manipulation library 'data.table' to ensure scalability to large data problems.
 
-## Installation
+## Installation 
 
 You can install the development version of time.table from [GitHub](https://github.com/bmgaldo/time.table) with:
 
@@ -31,7 +31,7 @@ You can install the development version of time.table from [GitHub](https://gith
 devtools::install_github("bmgaldo/time.table")
 ```
 
-# Example Data 
+# Example data 
 
 ```{r}
 library(time.table)
@@ -48,7 +48,7 @@ df_admit_discharge = data.frame(patient_id=paste0("pat_",1:2),
 head(df_admit_discharge)
 ```
 
-# Create TimeTable Template 
+# Create a time table template 
 
 this specifics the start & end times of each IDs table. This template will be the scaffold in which variables will be added to a timetable.
 
@@ -65,7 +65,7 @@ head(TimeTableTempl)
 
 
 
-# Add Static feature to a TimeTable
+# Add a variable feature to a time table
 
 First, we'll generate some fake data for our two patients. In this example, a patient's heart rate is measured every few hours.
 
@@ -110,7 +110,7 @@ heart_rate_tt = time.table::PutOnTimeTable(value = df_heartrate$heart_rate,
 head(heart_rate_tt)
 ```
 
-# Add Static feature to a TimeTable
+# Add a static feature to a time table
 
 ```{r}
 
@@ -146,9 +146,19 @@ sex_tt = PutOnTimeTable(value = df_sex$value,
 head(sex_tt)
 ```
 
-# Combine TimeTables into a data.table  
+# Combine time tables into a singular data.table  
+
+## Right join
+```{r}
+
+CombineTimeTables(c("sex_tt","heart_rate_tt"),
+                  join_type='right_join') 
+
+```
 
 ## Cbind
+
+faster but less safe
 ```{r}
 # 
 tt = CombineTimeTables(c("sex_tt","heart_rate_tt"),
@@ -157,10 +167,3 @@ tt = CombineTimeTables(c("sex_tt","heart_rate_tt"),
 head(tt)
 ```
 
-## Right Join
-```{r}
-
-CombineTimeTables(c("sex_tt","heart_rate_tt"),
-                  join_type='right_join') 
-
-```

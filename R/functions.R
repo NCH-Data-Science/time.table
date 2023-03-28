@@ -230,7 +230,7 @@ PutOnTimeTable=function(
   measures_on_grid = lapply(list_df,
                             function(x,grid_use){
                               table.express::right_join(x,grid_use,
-                                                        by=c('grid_datetimes','IDs')) },
+                                                        by=c('grid_datetimes','IDs')) |> unique() },
                             grid_use=Template)
   
   # if a measurement's associated time is later than the start of the grid

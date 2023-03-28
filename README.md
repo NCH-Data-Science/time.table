@@ -47,7 +47,7 @@ head(df_admit_discharge)
 # Create a time table template
 
 this specifics the start & end times of each IDs table. This template
-will be the scaffold in which variables will be added to a timetable.
+will be the scaffold in which variables will be added to a time table.
 
 ``` r
 
@@ -96,12 +96,12 @@ df_heartrate = data.frame(IDs = c(ID_pat_1,ID_pat_2),
 
 head(df_heartrate)
 #>     IDs heart_rate               times
-#> 1 pat_1   73.17768 2012-03-12 12:12:12
-#> 2 pat_1   87.32907 2012-03-12 17:12:12
-#> 3 pat_1  100.66232 2012-03-12 22:12:12
-#> 4 pat_1   93.96322 2012-03-13 03:12:12
-#> 5 pat_1   75.72408 2012-03-13 08:12:12
-#> 6 pat_1   51.32580 2012-03-13 13:12:12
+#> 1 pat_1   53.28328 2012-03-12 12:12:12
+#> 2 pat_1   69.55088 2012-03-12 17:12:12
+#> 3 pat_1   92.42098 2012-03-12 22:12:12
+#> 4 pat_1  105.38101 2012-03-13 03:12:12
+#> 5 pat_1   77.38299 2012-03-13 08:12:12
+#> 6 pat_1  104.63477 2012-03-13 13:12:12
 ```
 
 ``` r
@@ -118,12 +118,12 @@ heart_rate_tt = time.table::PutOnTimeTable(value = df_heartrate$heart_rate,
 
 head(heart_rate_tt)
 #>         grid_datetimes   IDs   var_name    value
-#> 1: 2012-03-12 13:00:00 pat_1 heart_rate 73.17768
-#> 2: 2012-03-12 14:00:00 pat_1 heart_rate 73.17768
-#> 3: 2012-03-12 15:00:00 pat_1 heart_rate 73.17768
+#> 1: 2012-03-12 13:00:00 pat_1 heart_rate 53.28328
+#> 2: 2012-03-12 14:00:00 pat_1 heart_rate 53.28328
+#> 3: 2012-03-12 15:00:00 pat_1 heart_rate 53.28328
 #> 4: 2012-03-12 16:00:00 pat_1 heart_rate       NA
 #> 5: 2012-03-12 17:00:00 pat_1 heart_rate       NA
-#> 6: 2012-03-12 18:00:00 pat_1 heart_rate 87.32907
+#> 6: 2012-03-12 18:00:00 pat_1 heart_rate 69.55088
 ```
 
 # Add a static feature to a time table
@@ -178,20 +178,17 @@ head(sex_tt)
 
 ``` r
 
-CombineTimeTables(c("sex_tt","heart_rate_tt"),
-                  join_type='right_join') 
-#>      heart_rate   IDs      grid_datetimes    sex
-#>   1:   73.17768 pat_1 2012-03-12 13:00:00   male
-#>   2:   73.17768 pat_1 2012-03-12 14:00:00   male
-#>   3:   73.17768 pat_1 2012-03-12 15:00:00   male
-#>   4:         NA pat_1 2012-03-12 16:00:00   male
-#>   5:         NA pat_1 2012-03-12 17:00:00   male
-#>  ---                                            
-#> 357:         NA pat_2 2012-03-20 07:00:00 female
-#> 358:   79.66092 pat_2 2012-03-20 08:00:00 female
-#> 359:   79.66092 pat_2 2012-03-20 09:00:00 female
-#> 360:   79.66092 pat_2 2012-03-20 10:00:00 female
-#> 361:         NA pat_2 2012-03-20 11:00:00 female
+tt = CombineTimeTables(c("sex_tt","heart_rate_tt"),
+                  join_type = 'right_join') 
+
+head(tt)
+#>    heart_rate   IDs      grid_datetimes  sex
+#> 1:   53.28328 pat_1 2012-03-12 13:00:00 male
+#> 2:   53.28328 pat_1 2012-03-12 14:00:00 male
+#> 3:   53.28328 pat_1 2012-03-12 15:00:00 male
+#> 4:         NA pat_1 2012-03-12 16:00:00 male
+#> 5:         NA pat_1 2012-03-12 17:00:00 male
+#> 6:   69.55088 pat_1 2012-03-12 18:00:00 male
 ```
 
 ## Cbind
@@ -201,14 +198,14 @@ faster but less safe
 ``` r
 # 
 tt = CombineTimeTables(c("sex_tt","heart_rate_tt"),
-                       join_type='cbind')
+                       join_type = 'cbind')
 
 head(tt)
 #>    heart_rate  sex   IDs      grid_datetimes
-#> 1:   73.17768 male pat_1 2012-03-12 13:00:00
-#> 2:   73.17768 male pat_1 2012-03-12 14:00:00
-#> 3:   73.17768 male pat_1 2012-03-12 15:00:00
+#> 1:   53.28328 male pat_1 2012-03-12 13:00:00
+#> 2:   53.28328 male pat_1 2012-03-12 14:00:00
+#> 3:   53.28328 male pat_1 2012-03-12 15:00:00
 #> 4:         NA male pat_1 2012-03-12 16:00:00
 #> 5:         NA male pat_1 2012-03-12 17:00:00
-#> 6:   87.32907 male pat_1 2012-03-12 18:00:00
+#> 6:   69.55088 male pat_1 2012-03-12 18:00:00
 ```

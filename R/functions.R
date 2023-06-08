@@ -1,5 +1,4 @@
 .datatable.aware <- TRUE
-
 #' creates a sequence of times uniformly-spaced for an ID
 #' @param  x data.frame from created mid GetTimeTableTemplate
 #' @param  si see sample_interval in `GetTimeTableTemplate`
@@ -32,9 +31,10 @@ CharLOCF <- function(x) {
 #' @return long table of variables, time points at every sample_interval from  start_times to end_times
 #' @export
 GetTimeTableTemplate <- function(start_times = NULL,
-                                  end_times = NULL,
-                                  IDs = NULL, 
-                                  sample_interval = "30 minutes") { 
+                                 end_times = NULL,
+                                 IDs = NULL, 
+                                 sample_interval = "30 minutes",
+                                 cores=1) { 
   
   
   
@@ -55,21 +55,46 @@ GetTimeTableTemplate <- function(start_times = NULL,
   }
   
   # construct a data.frame of ID start and end
-  time_df = data.frame('IDs' = IDs,
+  time_df = data.frame('IDs' = IDs |> as.character(),
                        'start_times' = start_times,
                        'end_times' = end_times) 
   
-  grid_df =
-    ExpandTimes(time_df[1,],
-                si = sample_interval)
-  if(length(IDs)>1){
-    for(i in 2:nrow(time_df)){
-      grid_df = rbind(grid_df,
-                      ExpandTimes(time_df[i,],
-                                  si = sample_interval))
+  if(cores>1){
+    cl1 = makeForkCluster(cores)
+    registerDoParallel(cl1, cores)
+    
+    # make i's for iterator
+    is =  1:nrow(time_df)
+    
+    # iterator in parallel
+    grid_dt <- foreach(i = is) %dopar% {
+      ExpandTimes(time_df[i,],
+                  si = sample_interval)
+    } 
+    grid_dt = grid_dt |> 
+      data.table::rbindlist() |> 
+      data.table::as.data.table()
+    
+    stopCluster(cl1)
+    
+  } else {
+    
+    grid_df =
+      ExpandTimes(time_df[1,],
+                  si = sample_interval)
+    
+    if(length(IDs)>1){
+      
+      for(i in 2:nrow(time_df)){
+        grid_df = rbind(grid_df,
+                        ExpandTimes(time_df[i,],
+                                    si = sample_interval))
+      }
     }
+    
+    grid_dt <- grid_df |> data.table::as.data.table()
   }
-  grid_dt <- grid_df |> data.table::as.data.table()
+  
   colnames(grid_dt) = c("IDs", "grid_datetimes")
   
   return(grid_dt)
@@ -156,7 +181,7 @@ GetLOCFvalue <- function(x,
 #' @return a data.table with value on a discrete time grids
 #' 
 #' @export
-PutOnTimeTable=function(
+PutOnTimeTable = function(
     values = NULL,
     IDs = NULL,
     datetimes = NULL,
@@ -190,23 +215,22 @@ PutOnTimeTable=function(
   
   if(is.null(Template)){
     Template <- GetTimeTableTemplate(start_times = start_times,
-                                      end_times = end_times,
-                                      sample_interval = sample_interval,
-                                      IDs = IDs_times)
+                                     end_times = end_times,
+                                     sample_interval = sample_interval,
+                                     IDs = IDs_times)
   }
   
   IDs <- as.character(IDs)
   
   df = data.table::data.table('var_name' = rep(var_name,
-                                   length(IDs)),
-                  'IDs' = IDs,
-                  'value' = value,
-                  'datetimes' = datetimes)
+                                               length(IDs)),
+                              'IDs' = IDs |> as.character(),
+                              'value' = value,
+                              'datetimes' = datetimes)
   
   df = df |> table.express::mutate(grid_datetimes =
                                      lubridate::ceiling_date(datetimes, unit = sample_interval)
-  ) |> 
-    data.table::as.data.table()
+  ) |> data.table::as.data.table()
   
   # if there are multiple measures per grid time point, we need to consolidate
   if(aggregration_type == 'mean'){
@@ -222,6 +246,7 @@ PutOnTimeTable=function(
   
   data.table::setorder(df,IDs,var_name,grid_datetimes)
   
+  
   # split by variable name
   #list_df <- df |> data.table:::split.data.table(by='var_name')
   list_df <- df |> split(by='var_name')
@@ -230,7 +255,7 @@ PutOnTimeTable=function(
   measures_on_grid = lapply(list_df,
                             function(x,grid_use){
                               table.express::right_join(x,grid_use,
-                                                        by=c('grid_datetimes','IDs')) |> unique() },
+                                                        by=c('grid_datetimes','IDs')) },
                             grid_use=Template)
   
   # if a measurement's associated time is later than the start of the grid
@@ -262,7 +287,7 @@ PutOnTimeTable=function(
 #'  your data.table by IDs and grid_datetimes. "right_join" is the safest but least efficient and will even work with TimeTables of unequal rows.
 #' @export
 CombineTimeTables = function(TimeTable_names,
-                              join_type=c("right_join")){
+                             join_type=c("right_join")){
   
   n_tables = length(TimeTable_names)
   
@@ -323,6 +348,14 @@ Merge2TimeTables=function(giver_tt,reciever_tt,join_type=c("right_join")){
     reciever_tt = PrepForJoin(reciever_tt,keep_template = TRUE)
     
     return(table.express::right_join(giver_tt ,reciever_tt,by=c("IDs","grid_datetimes")))
+    
+  } else if(join_type == 'full_join'){
+    
+    giver_tt  = PrepForJoin(giver_tt ,keep_template = TRUE)
+    reciever_tt = PrepForJoin(reciever_tt,keep_template = TRUE)
+    
+    return(table.express::full_join(giver_tt,
+                                    reciever_tt,by=c("IDs","grid_datetimes")))
     
   } else {
     stop("invalid join_type")
@@ -392,7 +425,7 @@ CheckStartEndTimes = function(starts,
   if(!length(starts) == length(ends)){
     stop('the number of start_times does not equal number of end_times') 
   }
-  if(!all(starts<ends)){
+  if(!all(starts<=ends)){
     stop(paste0('end_times not later than start_times',"check starts with index: ", which(!starts<ends))) 
   }    
   if(!(all(lubridate::is.POSIXct(starts)) & 
@@ -435,4 +468,3 @@ CheckAggregrationType=function(x){
     stop("invalid aggregation type: must be 'latest' or 'mean'")
   }
 }
-
